@@ -12,9 +12,9 @@
 
 <p align="center">
   <a href="https://github.com/savekar-ev/open-source-csms/blob/main/LICENSE"><img alt="License: ISC" src="https://img.shields.io/badge/License-ISC-blue.svg" /></a>
-  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-18%2B-green?logo=node.js" />
+  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-20%2B-green?logo=node.js" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript" />
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-14%2B-black?logo=next.js" />
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15%2B-black?logo=next.js" />
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-15%2B-blue?logo=postgresql" />
   <img alt="OCPP" src="https://img.shields.io/badge/OCPP-1.6-orange" />
   <a href="https://csms.savekar.com"><img alt="Live Demo" src="https://img.shields.io/badge/Live%20Demo-csms.savekar.com-brightgreen" /></a>
@@ -100,7 +100,7 @@ flowchart TD
     OCPP["OCPP WebSocket Server\nws://:9220/OCPP/1.6/{id}"]
     API["Backend REST API\nExpress + TypeScript\nhttp://:3000"]
     DB[("PostgreSQL Database\n(via Prisma ORM)")]
-    UI["🖥️ Admin Dashboard\nNext.js 14 + shadcn/ui\nhttp://:3002"]
+    UI["🖥️ Admin Dashboard\nNext.js 15 + shadcn/ui\nhttp://:3002"]
     LOGS["📋 Live OCPP Log Viewer\nWebSocket Stream\nws://:3001"]
 
     CP <-->|"OCPP 1.6 JSON\nWebSocket"| OCPP
@@ -144,7 +144,7 @@ open-source-csms/
 │   ├── prisma/               # Prisma schema & migrations
 │   └── package.json
 │
-├── Frontend/                 # Next.js 14 admin dashboard
+├── Frontend/                 # Next.js 15 admin dashboard
 │   ├── app/                  # App Router pages & layouts
 │   ├── components/           # Reusable UI components (shadcn/ui based)
 │   ├── hooks/                # Custom React hooks
@@ -201,7 +201,7 @@ open-source-csms/
 ### Backend
 | Layer | Technology |
 |-------|-----------|
-| Runtime | Node.js 18+ |
+| Runtime | Node.js 20+ |
 | Language | TypeScript |
 | Framework | Express.js |
 | OCPP Protocol | Native `ws` WebSocket library |
@@ -212,7 +212,7 @@ open-source-csms/
 ### Frontend
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 14 (App Router) |
+| Framework | Next.js 15 (App Router) |
 | Language | TypeScript |
 | Styling | Tailwind CSS |
 | UI Components | shadcn/ui |
@@ -224,7 +224,7 @@ open-source-csms/
 ## Quick Start
 
 ### Prerequisites
-- **Node.js** 18 or higher — [Download](https://nodejs.org/)
+- **Node.js** 20 or higher — [Download](https://nodejs.org/)
 - **PostgreSQL** 15+ — [Download](https://www.postgresql.org/download/) or use a cloud provider
 
 ### 1. Clone the repository
@@ -262,9 +262,14 @@ npm run dev
 
 ---
 
-## Detailed Setup
+## Detailed Setup & Production Deployment
 
-For a step-by-step guide covering environment configuration, database setup, initial admin user creation, and charger connection — see **[SETUP.md](./SETUP.md)**.
+For a step-by-step guide covering local environment configuration, as well as a complete manual for **Production Deployment on Google Cloud (Ubuntu VM)** — see **[SETUP.md](./SETUP.md)**.
+
+## Documentation
+
+- **[User Manual](./USER_MANUAL.md)**: A comprehensive guide on how to navigate the CMS dashboard, manage stations/chargers, RFID tags, and use remote operations.
+- **[Proposed Improvements](./PROPOSED_IMPROVEMENTS.md)**: An outline of architectural enhancements and advanced features (e.g., Docker, Redis, OCPI) recommended for production scaling.
 
 ---
 
