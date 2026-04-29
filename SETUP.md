@@ -1,100 +1,259 @@
-# Setup Guide - Open-Source OCPP CMS
+# Setup Guide & Deployment Manual (Ubuntu on Google Cloud)
 
-This guide walkthrough the steps to set up both the Backend and Frontend of the Open-Source OCPP 1.6 CMS.
-
-## Prerequisites
-
-Ensure you have the following installed:
-- **Node.js** 18 or higher
-- **PostgreSQL** database (running locally or a connection string to a remote instance)
+This guide walks you through the steps to set up both the Backend and Frontend of the Open-Source OCPP 1.6 CMS on a local machine, as well as providing **detailed production deployment instructions for a Google Cloud Ubuntu VM**.
 
 ---
 
-## 1. Backend Setup
+## 1. Local Development Setup
 
-The Backend handles the OCPP protocol, database management, and provides the API for the frontend.
+If you want to run the project locally for development or testing, follow these steps.
 
-### Step 1.1: Install Dependencies
+### Prerequisites (Local)
+- **Node.js** 20 or higher (LTS recommended)
+- **PostgreSQL** database
+
+### 1.1 Backend Setup
 ```bash
 cd Backend
 npm install
-```
-
-### Step 1.2: Environment Configuration
-Copy the `.env.example` to `.env` and update the `DATABASE_URL` with your PostgreSQL credentials.
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/ocpp_cms?schema=public"
-PORT=3000
-OCPP_PORT=9220
-OCPP_LOG_WS_PORT=3001
-JWT_SECRET="your-secret-key"
-```
-
-### Step 1.3: Database Setup
-```bash
-# Generate Prisma types
+cp .env.example .env # Update DATABASE_URL and secrets
 npm run prisma:generate
-
-# Run migrations to create tables
 npm run prisma:migrate
-```
-
-### Step 1.4: Start Backend
-```bash
 npm run dev
 ```
-The backend will now be running:
-- **API**: `http://localhost:3000`
-- **OCPP WebSocket**: `ws://localhost:9220`
-- **OCPP Logs**: `ws://localhost:3001`
 
----
-
-## 2. Frontend Setup
-
-The Frontend provides the administrative dashboard to manage the CMS.
-
-### Step 2.1: Install Dependencies
+### 1.2 Frontend Setup
 ```bash
 cd ../Frontend
 npm install
-```
-
-### Step 2.2: Start Frontend
-```bash
 npm run dev
 ```
-The dashboard will be available at `http://localhost:3002` (standard Next.js port may vary if 3000 is taken).
 
 ---
 
-## 3. Initial Data Setup
+## 2. Production Deployment on Google Cloud (Ubuntu VM)
+
+This section provides a step-by-step manual for deploying the application to a Google Cloud Platform (GCP) Ubuntu VM.
+
+**Production Architecture Overview:**
+- **Frontend URL:** `https://ui.mobilitypulse.com` (served via Nginx)
+- **Backend/API URL:** `https://ocpp.mobilitypulse.com` (served via Nginx, routing to Backend Node.js process)
+- **OCPP WebSocket:** Handled on `ocpp.mobilitypulse.com` and proxied to the backend WS port.
+- **Process Manager:** PM2
+- **Database:** PostgreSQL installed locally on the VM (or use Cloud SQL)
+- **Web Server:** Nginx (acts as a reverse proxy for Node.js apps)
+
+### 2.1 Server Provisioning & Initial Setup
+
+1. Create a VM Instance on Google Cloud Platform using an **Ubuntu 22.04 LTS** (or 20.04) image.
+2. Assign a **Static External IP Address** to your VM in the GCP Console.
+3. Configure your DNS provider (Combell hosting) to point:
+   - `ui.mobilitypulse.com` -> `A Record` -> `[Your VM Static IP]`
+   - `ocpp.mobilitypulse.com` -> `A Record` -> `[Your VM Static IP]`
+4. Open GCP Firewall rules for the VM to allow traffic on ports **80 (HTTP)** and **443 (HTTPS)**.
+
+SSH into your VM and update packages:
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+### 2.2 Install Prerequisites
+
+**Install Node.js (v20+) & PM2:**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+sudo npm install -g pm2
+```
+
+**Install PostgreSQL:**
+*(If using Google Cloud SQL, skip this and use the Cloud SQL connection string)*
+```bash
+sudo apt install postgresql postgresql-contrib -y
+sudo systemctl start postgresql.service
+
+# Setup Database and User
+sudo -u postgres psql -c "CREATE DATABASE ocpp_cms;"
+sudo -u postgres psql -c "CREATE USER cms_user WITH PASSWORD 'your_secure_password';"
+sudo -u postgres psql -c "ALTER ROLE cms_user SET client_encoding TO 'utf8';"
+sudo -u postgres psql -c "ALTER ROLE cms_user SET default_transaction_isolation TO 'read committed';"
+sudo -u postgres psql -c "ALTER ROLE cms_user SET timezone TO 'UTC';"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ocpp_cms TO cms_user;"
+```
+
+**Install Nginx & Certbot:**
+```bash
+sudo apt install nginx -y
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+### 2.3 Clone & Setup the Application
+
+```bash
+cd /var/www/
+sudo git clone <YOUR_REPOSITORY_URL> ocpp-cms
+sudo chown -R $USER:$USER /var/www/ocpp-cms
+cd ocpp-cms
+```
+
+#### Backend Setup
+```bash
+cd /var/www/ocpp-cms/Backend
+npm install
+
+# Create environment file
+cat <<EOT >> .env
+DATABASE_URL="postgresql://cms_user:your_secure_password@localhost:5432/ocpp_cms?schema=public"
+PORT=3000
+OCPP_PORT=9220
+OCPP_LOG_WS_PORT=3001
+JWT_SECRET="generate_a_very_secure_random_string_here"
+EOT
+
+# Generate and migrate DB
+npx prisma generate
+npx prisma migrate deploy
+
+# Build and start with PM2
+npm run build
+pm2 start dist/server.js --name "ocpp-backend"
+```
+
+#### Frontend Setup
+```bash
+cd /var/www/ocpp-cms/Frontend
+npm install
+
+# Build Next.js application
+npm run build
+
+# Start frontend with PM2
+pm2 start npm --name "ocpp-frontend" -- start
+```
+
+Save the PM2 process list so it restarts on reboot:
+```bash
+pm2 save
+pm2 startup
+# Run the command PM2 outputs to setup systemd
+```
+
+### 2.4 Configure Nginx as a Reverse Proxy
+
+Create an Nginx configuration for the **Backend** (`ocpp.mobilitypulse.com`):
+```bash
+sudo nano /etc/nginx/sites-available/ocpp.mobilitypulse.com
+```
+Add the following configuration:
+```nginx
+server {
+    listen 80;
+    server_name ocpp.mobilitypulse.com;
+
+    # REST API Routing
+    location /api/ {
+        proxy_pass http://localhost:3000/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # OCPP WebSocket Routing (Port 9220)
+    location /OCPP/ {
+        proxy_pass http://localhost:9220/OCPP/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+    }
+
+    # OCPP Logs WebSocket Routing (Port 3001)
+    location /ocpp-logs {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+    }
+}
+```
+
+Create an Nginx configuration for the **Frontend Dashboard** (`ui.mobilitypulse.com`):
+```bash
+sudo nano /etc/nginx/sites-available/ui.mobilitypulse.com
+```
+Add the following configuration:
+```nginx
+server {
+    listen 80;
+    server_name ui.mobilitypulse.com;
+
+    location / {
+        proxy_pass http://localhost:3000; # NOTE: Update if Next.js runs on 3002
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+*Note: Make sure the Frontend proxy_pass port matches the port your PM2 Next.js instance binds to (default is usually 3000, but if backend takes 3000, frontend might use 3002. Adjust PM2 startup commands or Nginx accordingly).*
+
+Enable both sites:
+```bash
+sudo ln -s /etc/nginx/sites-available/ocpp.mobilitypulse.com /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/ui.mobilitypulse.com /etc/nginx/sites-enabled/
+
+# Test Nginx configuration
+sudo nginx -t
+
+# Restart Nginx
+sudo systemctl restart nginx
+```
+
+### 2.5 Secure with SSL (Certbot)
+
+Run Certbot to automatically fetch and configure Let's Encrypt SSL certificates for both domains.
+
+```bash
+sudo certbot --nginx -d ocpp.mobilitypulse.com
+sudo certbot --nginx -d ui.mobilitypulse.com
+```
+Follow the prompts. Certbot will automatically modify your Nginx configurations to enforce HTTPS and handle WebSocket upgrade headers securely over WSS.
+
+---
+
+## 3. Post-Installation Initial Setup
 
 Since this is a fresh installation, you'll need to create an initial admin user and at least one charging station.
 
-### 3.1 Create Admin User
-Use Prisma Studio for a GUI way to add the first user:
+### Create Admin User
+To securely create the first admin user, you can connect to the database or use Prisma Studio locally mapped through SSH, or add an initialization script.
+If running locally on the VM:
 ```bash
-cd Backend
-npm run prisma:studio
+cd /var/www/ocpp-cms/Backend
+npx prisma studio
 ```
+(You will need to tunnel port 5555 via SSH to view Prisma Studio on your local browser).
 Add a record to the `User` table with `role: "admin"`.
 
-### 3.2 Create Station & Charger
-You can use the Dashboard UI once logged in to create your first **Charging Station** and then add **Chargers** to it.
-
----
-
-## 4. Connecting a Charger
-
-To test the system, connect an OCPP 1.6 charger (or simulator) to:
+### Connecting a Charger in Production
+Once deployed and SSL is configured, point your OCPP 1.6 charger (or simulator) to your secure WebSocket endpoint:
 ```
-ws://localhost:9220/OCPP/1.6/{chargerId}
+wss://ocpp.mobilitypulse.com/OCPP/1.6/{chargerId}
 ```
-*Note: `{chargerId}` should match the `charger_id` of a charger you created in the database.*
+*Note the use of `wss://` instead of `ws://` now that SSL is active.*
 
-## Troubleshooting
+## Troubleshooting Production
 
-- **Database Connection**: Ensure PostgreSQL is running and the `DATABASE_URL` is correct.
-- **Port Conflicts**: If port 3000, 9220, or 3001 are in use, update the `.env` file in the Backend.
-- **Next.js Port**: If the Frontend doesn't open on 3002, check the terminal output for the correct URL.
+- **Nginx Error Logs:** `sudo tail -f /var/log/nginx/error.log`
+- **Backend/Frontend PM2 Logs:** `pm2 logs`
+- **Database Connection:** Ensure the `DATABASE_URL` in `.env` uses the exact password and user you created in Postgres.
+- **WebSockets disconnecting:** Check that Nginx is configured to properly pass the `Upgrade` and `Connection` headers as shown in the Nginx config snippet.
