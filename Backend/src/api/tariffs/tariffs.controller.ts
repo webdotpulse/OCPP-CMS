@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../../config/database.js";
 import { logger } from "../../utils/logger.js";
+import { parseId, parsePagination } from "../../utils/validation.js";
 import type { CreateTariffDto, UpdateTariffDto } from "../../types/index.js";
 
 /**
@@ -8,10 +9,11 @@ import type { CreateTariffDto, UpdateTariffDto } from "../../types/index.js";
  */
 export const getAllTariffs = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 50, search } = req.query;
+    const { page: queryPage, limit: queryLimit, search } = req.query;
+    const { page, limit } = parsePagination(queryPage, queryLimit);
 
-    const skip = (Number(page) - 1) * Number(limit);
-    const take = Number(limit);
+    const skip = (page - 1) * limit;
+    const take = limit;
 
     const where: any = {};
     if (search) {
@@ -65,7 +67,14 @@ export const getAllTariffs = async (req: Request, res: Response) => {
  */
 export const getTariffById = async (req: Request, res: Response) => {
   try {
-    const tariffId = parseInt(req.params.id as string);
+    const tariffId = parseId(req.params.id);
+
+    if (!tariffId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid tariff ID",
+      });
+    }
 
     const tariff = await prisma.tariff.findUnique({
       where: { tariff_id: tariffId },
@@ -157,7 +166,15 @@ export const createTariff = async (req: Request, res: Response) => {
  */
 export const updateTariff = async (req: Request, res: Response) => {
   try {
-    const tariffId = parseInt(req.params.id as string);
+    const tariffId = parseId(req.params.id);
+
+    if (!tariffId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid tariff ID",
+      });
+    }
+
     const data = req.body as UpdateTariffDto;
 
     // Check if tariff exists
@@ -211,7 +228,14 @@ export const updateTariff = async (req: Request, res: Response) => {
  */
 export const deleteTariff = async (req: Request, res: Response) => {
   try {
-    const tariffId = parseInt(req.params.id as string);
+    const tariffId = parseId(req.params.id);
+
+    if (!tariffId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid tariff ID",
+      });
+    }
 
     // Check if tariff exists
     const existing = await prisma.tariff.findUnique({
@@ -254,8 +278,15 @@ export const deleteTariff = async (req: Request, res: Response) => {
  */
 export const assignTariffToCharger = async (req: Request, res: Response) => {
   try {
-    const tariffId = parseInt(req.params.id as string);
-    const chargerId = parseInt(req.params.chargerId as string);
+    const tariffId = parseId(req.params.id);
+    const chargerId = parseId(req.params.chargerId);
+
+    if (!tariffId || !chargerId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid ID(s) provided",
+      });
+    }
 
     // Check if tariff exists
     const tariff = await prisma.tariff.findUnique({
@@ -307,8 +338,15 @@ export const assignTariffToCharger = async (req: Request, res: Response) => {
  */
 export const removeTariffFromCharger = async (req: Request, res: Response) => {
   try {
-    const tariffId = parseInt(req.params.id as string);
-    const chargerId = parseInt(req.params.chargerId as string);
+    const tariffId = parseId(req.params.id);
+    const chargerId = parseId(req.params.chargerId);
+
+    if (!tariffId || !chargerId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid ID(s) provided",
+      });
+    }
 
     // Check if tariff exists
     const tariff = await prisma.tariff.findUnique({
@@ -360,7 +398,14 @@ export const removeTariffFromCharger = async (req: Request, res: Response) => {
  */
 export const getTariffChargers = async (req: Request, res: Response) => {
   try {
-    const tariffId = parseInt(req.params.id as string);
+    const tariffId = parseId(req.params.id);
+
+    if (!tariffId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid tariff ID",
+      });
+    }
 
     const tariff = await prisma.tariff.findUnique({
       where: { tariff_id: tariffId },
