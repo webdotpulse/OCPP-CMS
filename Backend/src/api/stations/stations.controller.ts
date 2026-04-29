@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../../config/database.js";
 import { logger } from "../../utils/logger.js";
+import { parseId, parsePagination } from "../../utils/validation.js";
 import type { CreateStationDto } from "../../types/index.js";
 
 /**
@@ -8,10 +9,11 @@ import type { CreateStationDto } from "../../types/index.js";
  */
 export const getAllStations = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 50, status } = req.query;
+    const { page: queryPage, limit: queryLimit, status } = req.query;
+    const { page, limit } = parsePagination(queryPage, queryLimit);
 
-    const skip = (Number(page) - 1) * Number(limit);
-    const take = Number(limit);
+    const skip = (page - 1) * limit;
+    const take = limit;
 
     const where: any = {};
     if (status) {
@@ -58,7 +60,14 @@ export const getAllStations = async (req: Request, res: Response) => {
  */
 export const getStationById = async (req: Request, res: Response) => {
   try {
-    const stationId = parseInt(req.params.id as string);
+    const stationId = parseId(req.params.id);
+
+    if (!stationId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid station ID",
+      });
+    }
 
     const station = await prisma.chargingStation.findUnique({
       where: { id: stationId },
@@ -92,7 +101,14 @@ export const getStationById = async (req: Request, res: Response) => {
  */
 export const getStationChargers = async (req: Request, res: Response) => {
   try {
-    const stationId = parseInt(req.params.id as string);
+    const stationId = parseId(req.params.id);
+
+    if (!stationId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid station ID",
+      });
+    }
 
     const chargers = await prisma.charger.findMany({
       where: { charging_station_id: stationId },
@@ -158,7 +174,14 @@ export const createStation = async (req: Request, res: Response) => {
  */
 export const updateStation = async (req: Request, res: Response) => {
   try {
-    const stationId = parseInt(req.params.id as string);
+    const stationId = parseId(req.params.id);
+
+    if (!stationId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid station ID",
+      });
+    }
 
     const station = await prisma.chargingStation.update({
       where: { id: stationId },
@@ -182,7 +205,14 @@ export const updateStation = async (req: Request, res: Response) => {
  */
 export const deleteStation = async (req: Request, res: Response) => {
   try {
-    const stationId = parseInt(req.params.id as string);
+    const stationId = parseId(req.params.id);
+
+    if (!stationId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid station ID",
+      });
+    }
 
     await prisma.chargingStation.delete({
       where: { id: stationId },

@@ -4,6 +4,7 @@ import { logger } from "../../utils/logger.js";
 import {
   isChargerConnected,
 } from "../../ocpp/remoteControl.js";
+import { parseId, parsePagination } from "../../utils/validation.js";
 import type { CreateChargerDto, UpdateChargerDto } from "../../types/index.js";
 
 /**
@@ -11,10 +12,11 @@ import type { CreateChargerDto, UpdateChargerDto } from "../../types/index.js";
  */
 export const getAllChargers = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 50 } = req.query;
+    const { page: queryPage, limit: queryLimit } = req.query;
+    const { page, limit } = parsePagination(queryPage, queryLimit);
 
-    const skip = (Number(page) - 1) * Number(limit);
-    const take = Number(limit);
+    const skip = (page - 1) * limit;
+    const take = limit;
 
     const [chargers, total] = await Promise.all([
       prisma.charger.findMany({
@@ -54,7 +56,14 @@ export const getAllChargers = async (req: Request, res: Response) => {
  */
 export const getChargerById = async (req: Request, res: Response) => {
   try {
-    const chargerId = parseInt(req.params.id as string);
+    const chargerId = parseId(req.params.id);
+
+    if (!chargerId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid charger ID",
+      });
+    }
 
     const charger = await prisma.charger.findUnique({
       where: { charger_id: chargerId },
@@ -89,7 +98,14 @@ export const getChargerById = async (req: Request, res: Response) => {
  */
 export const getChargerStatus = async (req: Request, res: Response) => {
   try {
-    const chargerId = parseInt(req.params.id as string);
+    const chargerId = parseId(req.params.id);
+
+    if (!chargerId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid charger ID",
+      });
+    }
 
     const charger = await prisma.charger.findUnique({
       where: { charger_id: chargerId },
@@ -191,7 +207,15 @@ export const createCharger = async (req: Request, res: Response) => {
  */
 export const updateCharger = async (req: Request, res: Response) => {
   try {
-    const chargerId = parseInt(req.params.id as string);
+    const chargerId = parseId(req.params.id);
+
+    if (!chargerId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid charger ID",
+      });
+    }
+
     const data = req.body as UpdateChargerDto;
 
     const { tariffId, ...rest } = data;
@@ -220,7 +244,14 @@ export const updateCharger = async (req: Request, res: Response) => {
  */
 export const deleteCharger = async (req: Request, res: Response) => {
   try {
-    const chargerId = parseInt(req.params.id as string);
+    const chargerId = parseId(req.params.id);
+
+    if (!chargerId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid charger ID",
+      });
+    }
 
     await prisma.charger.delete({
       where: { charger_id: chargerId },

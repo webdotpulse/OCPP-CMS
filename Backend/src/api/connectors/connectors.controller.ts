@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../../config/database.js";
 import { logger } from "../../utils/logger.js";
+import { parseId, parsePagination } from "../../utils/validation.js";
 import type { CreateConnectorDto } from "../../types/index.js";
 
 /**
@@ -8,14 +9,18 @@ import type { CreateConnectorDto } from "../../types/index.js";
  */
 export const getAllConnectors = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 50, charger_id } = req.query;
+    const { page: queryPage, limit: queryLimit, charger_id } = req.query;
+    const { page, limit } = parsePagination(queryPage, queryLimit);
 
-    const skip = (Number(page) - 1) * Number(limit);
-    const take = Number(limit);
+    const skip = (page - 1) * limit;
+    const take = limit;
 
     const where: any = {};
     if (charger_id) {
-      where.charger_id = Number(charger_id);
+      const parsedChargerId = parseId(charger_id);
+      if (parsedChargerId) {
+        where.charger_id = parsedChargerId;
+      }
     }
 
     const [connectors, total] = await Promise.all([
@@ -53,7 +58,14 @@ export const getAllConnectors = async (req: Request, res: Response) => {
  */
 export const getConnectorById = async (req: Request, res: Response) => {
   try {
-    const connectorId = parseInt(req.params.id as string);
+    const connectorId = parseId(req.params.id);
+
+    if (!connectorId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid connector ID",
+      });
+    }
 
     const connector = await prisma.connector.findUnique({
       where: { connector_id: connectorId },
@@ -117,7 +129,14 @@ export const createConnector = async (req: Request, res: Response) => {
  */
 export const updateConnector = async (req: Request, res: Response) => {
   try {
-    const connectorId = parseInt(req.params.id as string);
+    const connectorId = parseId(req.params.id);
+
+    if (!connectorId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid connector ID",
+      });
+    }
 
     const connector = await prisma.connector.update({
       where: { connector_id: connectorId },
@@ -141,7 +160,14 @@ export const updateConnector = async (req: Request, res: Response) => {
  */
 export const deleteConnector = async (req: Request, res: Response) => {
   try {
-    const connectorId = parseInt(req.params.id as string);
+    const connectorId = parseId(req.params.id);
+
+    if (!connectorId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid connector ID",
+      });
+    }
 
     await prisma.connector.delete({
       where: { connector_id: connectorId },
