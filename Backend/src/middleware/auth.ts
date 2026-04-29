@@ -15,7 +15,7 @@ export function authenticateToken(
   req: AuthRequest,
   res: Response,
   next: NextFunction
-): void {
+): void | Response {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
@@ -52,7 +52,7 @@ export function requireAdmin(
   req: AuthRequest,
   res: Response,
   next: NextFunction
-): void {
+): void | Response {
   if (req.userRole !== "admin") {
     return res.status(403).json({
       success: false,
@@ -68,7 +68,7 @@ export function requireAdmin(
 export function generateToken(userId: number, email: string, role: string): string {
   return jwt.sign(
     { userId, email, role },
-    config.jwtSecret,
-    { expiresIn: config.jwtExpiresIn }
+    config.jwtSecret as jwt.Secret,
+    { expiresIn: config.jwtExpiresIn as any }
   );
 }

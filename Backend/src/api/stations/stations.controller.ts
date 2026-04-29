@@ -58,7 +58,7 @@ export const getAllStations = async (req: Request, res: Response) => {
  */
 export const getStationById = async (req: Request, res: Response) => {
   try {
-    const stationId = parseInt(req.params.id);
+    const stationId = parseInt(req.params.id as string);
 
     const station = await prisma.chargingStation.findUnique({
       where: { id: stationId },
@@ -92,7 +92,7 @@ export const getStationById = async (req: Request, res: Response) => {
  */
 export const getStationChargers = async (req: Request, res: Response) => {
   try {
-    const stationId = parseInt(req.params.id);
+    const stationId = parseInt(req.params.id as string);
 
     const chargers = await prisma.charger.findMany({
       where: { charging_station_id: stationId },
@@ -158,7 +158,7 @@ export const createStation = async (req: Request, res: Response) => {
  */
 export const updateStation = async (req: Request, res: Response) => {
   try {
-    const stationId = parseInt(req.params.id);
+    const stationId = parseInt(req.params.id as string);
 
     const station = await prisma.chargingStation.update({
       where: { id: stationId },
@@ -182,7 +182,7 @@ export const updateStation = async (req: Request, res: Response) => {
  */
 export const deleteStation = async (req: Request, res: Response) => {
   try {
-    const stationId = parseInt(req.params.id);
+    const stationId = parseInt(req.params.id as string);
 
     await prisma.chargingStation.delete({
       where: { id: stationId },
