@@ -53,7 +53,7 @@ export const getAllConnectors = async (req: Request, res: Response) => {
  */
 export const getConnectorById = async (req: Request, res: Response) => {
   try {
-    const connectorId = parseInt(req.params.id);
+    const connectorId = parseInt(req.params.id as string);
 
     const connector = await prisma.connector.findUnique({
       where: { connector_id: connectorId },
@@ -117,7 +117,7 @@ export const createConnector = async (req: Request, res: Response) => {
  */
 export const updateConnector = async (req: Request, res: Response) => {
   try {
-    const connectorId = parseInt(req.params.id);
+    const connectorId = parseInt(req.params.id as string);
 
     const connector = await prisma.connector.update({
       where: { connector_id: connectorId },
@@ -141,7 +141,7 @@ export const updateConnector = async (req: Request, res: Response) => {
  */
 export const deleteConnector = async (req: Request, res: Response) => {
   try {
-    const connectorId = parseInt(req.params.id);
+    const connectorId = parseInt(req.params.id as string);
 
     await prisma.connector.delete({
       where: { connector_id: connectorId },

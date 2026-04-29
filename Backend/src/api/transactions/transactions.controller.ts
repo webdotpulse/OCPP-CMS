@@ -80,8 +80,8 @@ export const getActiveTransactions = async (req: Request, res: Response) => {
     ]);
 
     const allActiveSessions = [
-      ...activeTransactions.map((t) => ({ ...t, type: "basic" })),
-      ...activeRfidSessions.map((s) => ({ ...s, type: "rfid" })),
+      ...activeTransactions.map((t: any) => ({ ...t, type: "basic" })),
+      ...activeRfidSessions.map((s: any) => ({ ...s, type: "rfid" })),
     ];
 
     res.json({ success: true, data: allActiveSessions, count: allActiveSessions.length });
@@ -99,7 +99,7 @@ export const getActiveTransactions = async (req: Request, res: Response) => {
  */
 export const getChargerTransactions = async (req: Request, res: Response) => {
   try {
-    const charger_id = parseInt(req.params.chargerId);
+    const charger_id = parseInt(req.params.chargerId as string);
 
     const [transactions, rfidSessions] = await Promise.all([
       prisma.transaction.findMany({
@@ -204,7 +204,7 @@ export const getTransactionStats = async (req: Request, res: Response) => {
  */
 export const getTransactionById = async (req: Request, res: Response) => {
   try {
-    const transactionId = parseInt(req.params.id);
+    const transactionId = parseInt(req.params.id as string);
 
     const transaction = await prisma.transaction.findUnique({
       where: { id: transactionId },
@@ -233,7 +233,7 @@ export const getTransactionById = async (req: Request, res: Response) => {
  */
 export const getRfidSessionById = async (req: Request, res: Response) => {
   try {
-    const sessionId = parseInt(req.params.id);
+    const sessionId = parseInt(req.params.id as string);
 
     const rfidSession = await prisma.rfidSession.findUnique({
       where: { id: sessionId },

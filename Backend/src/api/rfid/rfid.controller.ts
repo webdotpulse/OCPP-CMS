@@ -60,7 +60,7 @@ export const getAllRfidUsers = async (req: Request, res: Response) => {
  */
 export const getRfidUserById = async (req: Request, res: Response) => {
   try {
-    const rfidUserId = parseInt(req.params.id);
+    const rfidUserId = parseInt(req.params.id as string);
 
     const rfidUser = await prisma.rfidUser.findUnique({
       where: { rfid_user_id: rfidUserId },
@@ -147,7 +147,7 @@ export const createRfidUser = async (req: Request, res: Response) => {
  */
 export const updateRfidUser = async (req: Request, res: Response) => {
   try {
-    const rfidUserId = parseInt(req.params.id);
+    const rfidUserId = parseInt(req.params.id as string);
     const data = req.body as UpdateRfidUserDto;
 
     const rfidUser = await prisma.rfidUser.update({
@@ -172,7 +172,7 @@ export const updateRfidUser = async (req: Request, res: Response) => {
  */
 export const toggleRfidUserStatus = async (req: Request, res: Response) => {
   try {
-    const rfidUserId = parseInt(req.params.id);
+    const rfidUserId = parseInt(req.params.id as string);
     const { active } = req.query;
 
     if (active === undefined) {
@@ -206,7 +206,7 @@ export const toggleRfidUserStatus = async (req: Request, res: Response) => {
  */
 export const deleteRfidUser = async (req: Request, res: Response) => {
   try {
-    const rfidUserId = parseInt(req.params.id);
+    const rfidUserId = parseInt(req.params.id as string);
 
     await prisma.rfidUser.delete({
       where: { rfid_user_id: rfidUserId },

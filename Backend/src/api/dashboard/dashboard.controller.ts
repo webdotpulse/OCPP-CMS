@@ -53,7 +53,7 @@ export const getOverview = async (req: Request, res: Response) => {
     // Calculate connector status distribution
     const connectors = await prisma.connector.findMany();
     const connectorStatusDistribution: Record<string, number> = {};
-    connectors.forEach((c) => {
+    connectors.forEach((c: any) => {
       connectorStatusDistribution[c.status] = (connectorStatusDistribution[c.status] || 0) + 1;
     });
 
@@ -111,7 +111,7 @@ export const getLiveSessions = async (req: Request, res: Response) => {
     ]);
 
     const allActiveSessions = [
-      ...activeTransactions.map((t) => ({
+      ...activeTransactions.map((t: any) => ({
         transactionId: t.id,
         chargerName: t.charger.name,
         connectorName: t.connectorName,
@@ -121,7 +121,7 @@ export const getLiveSessions = async (req: Request, res: Response) => {
         type: "basic",
         durationMinutes: Math.floor((Date.now() - t.startTime.getTime()) / 60000),
       })),
-      ...activeRfidSessions.map((s) => ({
+      ...activeRfidSessions.map((s: any) => ({
         transactionId: s.id,
         chargerName: s.charger.name,
         connectorName: s.connectorName,
@@ -162,7 +162,7 @@ export const getDistribution = async (req: Request, res: Response) => {
     });
 
     const distribution = connectors.reduce(
-      (acc, connector) => {
+      (acc: any, connector: any) => {
         const status = connector.status;
         if (!acc[status]) {
           acc[status] = { count: 0, connectors: [] as any[] };
@@ -207,7 +207,7 @@ export const getChargersStatus = async (req: Request, res: Response) => {
     const now = Date.now();
     const offlineThreshold = 60 * 1000; // 60 seconds
 
-    const chargersWithStatus = chargers.map((charger) => {
+    const chargersWithStatus = chargers.map((charger: any) => {
       const timeSinceHeartbeat = now - charger.last_heartbeat.getTime();
       const isOnline = timeSinceHeartbeat < offlineThreshold;
 

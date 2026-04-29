@@ -3,6 +3,7 @@ import cors from "cors";
 import { config } from "./config/index.js";
 import { logger } from "./utils/logger.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import { authenticateToken } from "./middleware/auth.js";
 // Import API routes
 import authRoutes from "./api/auth/auth.routes.js";
 import chargersRoutes from "./api/chargers/chargers.routes.js";
@@ -40,16 +41,16 @@ export function createApp() {
             version: "1.0.0",
         });
     });
-    // API Routes (auth endpoints don't require authentication)
+    // API Routes
     app.use("/api/auth", authRoutes);
-    app.use("/api/chargers", chargersRoutes);
-    app.use("/api/stations", stationsRoutes);
-    app.use("/api/connectors", connectorsRoutes);
-    app.use("/api/rfid", rfidRoutes);
-    app.use("/api/tariffs", tariffsRoutes);
-    app.use("/api/transactions", transactionsRoutes);
-    app.use("/api/ocpp", ocppRoutes);
-    app.use("/api/dashboard", dashboardRoutes);
+    app.use("/api/chargers", authenticateToken, chargersRoutes);
+    app.use("/api/stations", authenticateToken, stationsRoutes);
+    app.use("/api/connectors", authenticateToken, connectorsRoutes);
+    app.use("/api/rfid", authenticateToken, rfidRoutes);
+    app.use("/api/tariffs", authenticateToken, tariffsRoutes);
+    app.use("/api/transactions", authenticateToken, transactionsRoutes);
+    app.use("/api/ocpp", authenticateToken, ocppRoutes);
+    app.use("/api/dashboard", authenticateToken, dashboardRoutes);
     // Error handling
     app.use(notFoundHandler);
     app.use(errorHandler);
