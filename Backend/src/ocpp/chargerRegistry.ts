@@ -1,5 +1,6 @@
 import { logger } from "../utils/logger.js";
 import type { ChargerConnection, ActiveTransaction } from "../types/index.js";
+import { redisClient, redisSubscriber, redisPublisher } from "../config/redis.js";
 
 class ChargerRegistry {
   private chargers: Map<number, ChargerConnection> = new Map();
@@ -9,12 +10,42 @@ class ChargerRegistry {
   constructor(offlineThresholdSeconds: number = 60) {
     this.offlineThreshold = offlineThresholdSeconds * 1000;
     this.startOfflineMonitor();
+    this.setupRedisSubscriber();
+  }
+
+  private setupRedisSubscriber(): void {
+    redisSubscriber.subscribe("ocpp_commands", (err) => {
+      if (err) logger.error(`Failed to subscribe to ocpp_commands: ${err}`);
+      else logger.info("Subscribed to ocpp_commands Redis channel");
+    });
+
+    redisSubscriber.on("message", async (channel, message) => {
+      if (channel === "ocpp_commands") {
+        try {
+          const { chargerId, payload } = JSON.parse(message);
+          // Only send if this instance holds the active connection
+          if (this.isConnected(chargerId)) {
+            await this.sendToCharger(chargerId, payload);
+          }
+        } catch (error) {
+          logger.error(`Error processing Redis pub/sub command: ${error}`);
+        }
+      }
+    });
+  }
+
+  private getRedisKey(chargerId: number): string {
+    return `charger:${chargerId}:session`;
+  }
+
+  private getTransactionKey(chargerId: number, transactionId: number): string {
+    return `charger:${chargerId}:transaction:${transactionId}`;
   }
 
   /**
    * Register a new charger connection
    */
-  register(chargerId: number, chargerName: string, ws: any): void {
+  async register(chargerId: number, chargerName: string, ws: any): Promise<void> {
     const connection: ChargerConnection = {
       chargerId,
       ws,
@@ -25,17 +56,38 @@ class ChargerRegistry {
     };
 
     this.chargers.set(chargerId, connection);
-    logger.info(`Charger registered: ${chargerName} (ID: ${chargerId})`);
+    logger.info(`Charger registered locally: ${chargerName} (ID: ${chargerId})`);
+
+    // Cache connection metadata in Redis
+    try {
+      await redisClient.hset(
+        this.getRedisKey(chargerId),
+        "chargerName", chargerName,
+        "connectedAt", connection.connectedAt.toISOString(),
+        "lastHeartbeat", connection.lastHeartbeat.toISOString(),
+        "status", "connected"
+      );
+      // Expire session data slightly longer than offline threshold to avoid premature cleanup
+      await redisClient.expire(this.getRedisKey(chargerId), this.offlineThreshold / 1000 * 2);
+    } catch (error) {
+      logger.error(`Error caching charger session in Redis: ${error}`);
+    }
   }
 
   /**
    * Unregister a charger (disconnected)
    */
-  unregister(chargerId: number): void {
+  async unregister(chargerId: number): Promise<void> {
     const connection = this.chargers.get(chargerId);
     if (connection) {
       this.chargers.delete(chargerId);
-      logger.info(`Charger unregistered: ${connection.chargerName} (ID: ${chargerId})`);
+      logger.info(`Charger unregistered locally: ${connection.chargerName} (ID: ${chargerId})`);
+
+      try {
+        await redisClient.del(this.getRedisKey(chargerId));
+      } catch (error) {
+        logger.error(`Error removing cached charger session in Redis: ${error}`);
+      }
     }
   }
 
@@ -47,69 +99,142 @@ class ChargerRegistry {
   }
 
   /**
-   * Check if a charger is connected
+   * Check if a charger is connected locally
    */
   isConnected(chargerId: number): boolean {
     return this.chargers.has(chargerId);
   }
 
   /**
+   * Check if a charger is connected anywhere in the cluster
+   */
+  async isConnectedGlobally(chargerId: number): Promise<boolean> {
+    if (this.isConnected(chargerId)) return true;
+    const exists = await redisClient.exists(this.getRedisKey(chargerId));
+    return exists === 1;
+  }
+
+  /**
    * Update charger's last heartbeat timestamp
    */
-  updateHeartbeat(chargerId: number): void {
+  async updateHeartbeat(chargerId: number): Promise<void> {
     const connection = this.chargers.get(chargerId);
     if (connection) {
       connection.lastHeartbeat = new Date();
+      try {
+        await redisClient.hset(this.getRedisKey(chargerId), "lastHeartbeat", connection.lastHeartbeat.toISOString());
+        await redisClient.expire(this.getRedisKey(chargerId), this.offlineThreshold / 1000 * 2);
+      } catch (error) {
+        logger.error(`Error updating cached heartbeat in Redis: ${error}`);
+      }
+    } else {
+      // Just in case it's another instance holding the socket, let's just refresh the key if it exists
+      try {
+        await redisClient.hset(this.getRedisKey(chargerId), "lastHeartbeat", new Date().toISOString());
+        await redisClient.expire(this.getRedisKey(chargerId), this.offlineThreshold / 1000 * 2);
+      } catch (error) {
+         // ignore
+      }
     }
   }
 
   /**
    * Start an active transaction for a charger
    */
-  startTransaction(chargerId: number, transactionId: number, connectorName: string, idTag?: string): void {
+  async startTransaction(chargerId: number, transactionId: number, connectorName: string, idTag?: string): Promise<void> {
+    const transactionData: ActiveTransaction = {
+      transactionId,
+      connectorName,
+      idTag,
+      startTime: new Date(),
+      initialMeterValue: 0,
+    };
+
     const connection = this.chargers.get(chargerId);
     if (connection) {
-      connection.transactions.set(transactionId, {
-        transactionId,
-        connectorName,
-        idTag,
-        startTime: new Date(),
-        initialMeterValue: 0,
-      });
+      connection.transactions.set(transactionId, transactionData);
+    }
+
+    try {
+      await redisClient.set(
+        this.getTransactionKey(chargerId, transactionId),
+        JSON.stringify(transactionData)
+      );
+    } catch (error) {
+      logger.error(`Error caching transaction in Redis: ${error}`);
     }
   }
 
   /**
    * End a transaction for a charger
    */
-  endTransaction(chargerId: number, transactionId: number): ActiveTransaction | undefined {
+  async endTransaction(chargerId: number, transactionId: number): Promise<ActiveTransaction | undefined> {
+    let transaction: ActiveTransaction | undefined;
+
     const connection = this.chargers.get(chargerId);
     if (connection) {
-      const transaction = connection.transactions.get(transactionId);
+      transaction = connection.transactions.get(transactionId);
       connection.transactions.delete(transactionId);
-      return transaction;
     }
-    return undefined;
+
+    try {
+      if (!transaction) {
+        const cached = await redisClient.get(this.getTransactionKey(chargerId, transactionId));
+        if (cached) transaction = JSON.parse(cached);
+      }
+      await redisClient.del(this.getTransactionKey(chargerId, transactionId));
+    } catch (error) {
+      logger.error(`Error removing cached transaction in Redis: ${error}`);
+    }
+
+    return transaction;
   }
 
   /**
    * Get active transaction for a charger
    */
-  getTransaction(chargerId: number, transactionId: number): ActiveTransaction | undefined {
+  async getTransaction(chargerId: number, transactionId: number): Promise<ActiveTransaction | undefined> {
     const connection = this.chargers.get(chargerId);
     if (connection) {
-      return connection.transactions.get(transactionId);
+      const tx = connection.transactions.get(transactionId);
+      if (tx) return tx;
     }
+
+    try {
+      const cached = await redisClient.get(this.getTransactionKey(chargerId, transactionId));
+      if (cached) return JSON.parse(cached) as ActiveTransaction;
+    } catch (error) {
+      logger.error(`Error getting cached transaction in Redis: ${error}`);
+    }
+
     return undefined;
   }
 
   /**
-   * Send OCPP message to a charger
+   * Publish an OCPP command via Redis to reach the correct instance
+   */
+  async publishCommand(chargerId: number, message: any): Promise<void> {
+    const cachedSession = await redisClient.hgetall(this.getRedisKey(chargerId));
+    if (!cachedSession || cachedSession.status !== "connected") {
+      throw new Error(`Charger ${chargerId} is not connected anywhere in cluster`);
+    }
+
+    // If we have the local connection, we can just send directly as an optimization
+    if (this.isConnected(chargerId)) {
+      await this.sendToCharger(chargerId, message);
+    } else {
+      // Publish to cluster
+      await redisPublisher.publish("ocpp_commands", JSON.stringify({ chargerId, payload: message }));
+    }
+  }
+
+  /**
+   * Send OCPP message to a charger connected to THIS instance
    */
   async sendToCharger(chargerId: number, message: any): Promise<any> {
     const connection = this.chargers.get(chargerId);
     if (!connection) {
-      throw new Error(`Charger ${chargerId} is not connected`);
+      throw new Error(`Charger ${chargerId} is not connected locally`);
     }
 
     // Lazily import to avoid circular dependency

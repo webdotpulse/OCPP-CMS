@@ -19,7 +19,7 @@ export async function remoteStartTransaction(
 
   try {
     // Check if charger is connected
-    if (!chargerRegistry.isConnected(chargerId)) {
+    if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
       return { status: "Rejected", error: "Charger not connected" };
     }
 
@@ -36,7 +36,7 @@ export async function remoteStartTransaction(
       }
     ];
 
-    await chargerRegistry.sendToCharger(chargerId, message);
+    await chargerRegistry.publishCommand(chargerId, message);
 
     logger.info(`Remote start sent to charger ${chargerId}, connector ${connectorId}, idTag ${idTag}`);
 
@@ -58,7 +58,7 @@ export async function remoteStopTransaction(
 
   try {
     // Check if charger is connected
-    if (!chargerRegistry.isConnected(chargerId)) {
+    if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
       return { status: "Rejected", error: "Charger not connected" };
     }
 
@@ -71,7 +71,7 @@ export async function remoteStopTransaction(
       { transactionId }
     ];
 
-    await chargerRegistry.sendToCharger(chargerId, message);
+    await chargerRegistry.publishCommand(chargerId, message);
 
     logger.info(`Remote stop sent to charger ${chargerId}, transaction ${transactionId}`);
 
@@ -91,7 +91,7 @@ export async function getConfiguration(
   key?: string
 ): Promise<{ status: string; configurationKey?: any[]; unknownKey?: string; error?: string }> {
   try {
-    if (!chargerRegistry.isConnected(chargerId)) {
+    if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
       return { status: "Rejected", error: "Charger not connected" };
     }
 
@@ -104,7 +104,7 @@ export async function getConfiguration(
       { key: key || [] }
     ];
 
-    await chargerRegistry.sendToCharger(chargerId, message);
+    await chargerRegistry.publishCommand(chargerId, message);
 
     logger.info(`GetConfiguration sent to charger ${chargerId}, key: ${key || "all"}`);
 
@@ -124,7 +124,7 @@ export async function changeConfiguration(
   configurationKey: Array<{ key: string; value: string }>
 ): Promise<{ status: string; error?: string }> {
   try {
-    if (!chargerRegistry.isConnected(chargerId)) {
+    if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
       return { status: "Rejected", error: "Charger not connected" };
     }
 
@@ -137,7 +137,7 @@ export async function changeConfiguration(
       { configurationKey }
     ];
 
-    await chargerRegistry.sendToCharger(chargerId, message);
+    await chargerRegistry.publishCommand(chargerId, message);
 
     logger.info(`ChangeConfiguration sent to charger ${chargerId}`);
 
@@ -157,7 +157,7 @@ export async function resetCharger(
   type: "Soft" | "Hard"
 ): Promise<{ status: string; error?: string }> {
   try {
-    if (!chargerRegistry.isConnected(chargerId)) {
+    if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
       return { status: "Rejected", error: "Charger not connected" };
     }
 
@@ -170,7 +170,7 @@ export async function resetCharger(
       { type }
     ];
 
-    await chargerRegistry.sendToCharger(chargerId, message);
+    await chargerRegistry.publishCommand(chargerId, message);
 
     logger.info(`Reset sent to charger ${chargerId}, type: ${type}`);
 
@@ -190,7 +190,7 @@ export async function unlockConnector(
   connectorId: number
 ): Promise<{ status: string; error?: string }> {
   try {
-    if (!chargerRegistry.isConnected(chargerId)) {
+    if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
       return { status: "Rejected", error: "Charger not connected" };
     }
 
@@ -203,7 +203,7 @@ export async function unlockConnector(
       { connectorId }
     ];
 
-    await chargerRegistry.sendToCharger(chargerId, message);
+    await chargerRegistry.publishCommand(chargerId, message);
 
     logger.info(`Unlock sent to charger ${chargerId}, connector ${connectorId}`);
 
@@ -224,7 +224,7 @@ export async function triggerMessage(
   connectorId?: number
 ): Promise<{ status: string; error?: string }> {
   try {
-    if (!chargerRegistry.isConnected(chargerId)) {
+    if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
       return { status: "Rejected", error: "Charger not connected" };
     }
 
@@ -242,7 +242,7 @@ export async function triggerMessage(
       payload
     ];
 
-    await chargerRegistry.sendToCharger(chargerId, message);
+    await chargerRegistry.publishCommand(chargerId, message);
 
     logger.info(
       `TriggerMessage sent to charger ${chargerId}, message: ${requestedMessage}`
@@ -265,6 +265,6 @@ export function getConnectedChargers(): number[] {
 /**
  * Check if a charger is connected
  */
-export function isChargerConnected(chargerId: number): boolean {
-  return chargerRegistry.isConnected(chargerId);
+export async function isChargerConnected(chargerId: number): Promise<boolean> {
+  return chargerRegistry.isConnectedGlobally(chargerId);
 }

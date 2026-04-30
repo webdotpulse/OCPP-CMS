@@ -1,10 +1,10 @@
 import { logger } from "../../utils/logger.js";
-import { remoteStartTransaction, remoteStopTransaction, resetCharger, unlockConnector, getConfiguration, changeConfiguration, triggerMessage, } from "../../ocpp/remoteControl.js";
+import { remoteStartTransaction, remoteStopTransaction, resetCharger, unlockConnector, getConfiguration, changeConfiguration, triggerMessage, getConnectedChargers as getConnected, } from "../../ocpp/remoteControl.js";
 /**
  * GET /api/ocpp/connected - Get list of connected chargers
  */
 export const getConnectedChargers = (req, res) => {
-    const connectedChargers = Array.from(global.chargerRegistry?.chargers?.keys() || []);
+    const connectedChargers = getConnected();
     res.json({
         success: true,
         data: connectedChargers,

@@ -1,9 +1,12 @@
 import express from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
+import RedisStore from "rate-limit-redis";
 import { config } from "./config/index.js";
 import { logger } from "./utils/logger.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 import { authenticateToken } from "./middleware/auth.js";
+import { redisClient } from "./config/redis.js";
 // Import API routes
 import authRoutes from "./api/auth/auth.routes.js";
 import chargersRoutes from "./api/chargers/chargers.routes.js";
@@ -26,6 +29,19 @@ export function createApp() {
     const app = express();
     // Security middleware
     app.use(cors());
+    // Rate Limiting
+    const limiter = rateLimit({
+        store: new RedisStore({
+            // @ts-expect-error - Known typing issue with rate-limit-redis and ioredis
+            sendCommand: (...args) => redisClient.call(args[0], ...args.slice(1)),
+        }),
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 1000, // Limit each IP to 1000 requests per `window` (here, per 15 minutes)
+        message: "Too many requests from this IP, please try again after 15 minutes",
+        standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+        legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    });
+    app.use(limiter);
     // Body parser
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));

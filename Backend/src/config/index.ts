@@ -20,6 +20,9 @@ export const config = {
 
   // Logging
   logLevel: process.env.LOG_LEVEL || "info",
+
+  // Redis
+  redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
 };
 
 export const logLevels = ["error", "warn", "info", "debug"] as const;

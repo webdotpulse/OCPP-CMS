@@ -1,9 +1,9 @@
 import { prisma } from "../config/database.js";
 import { chargerRegistry } from "./chargerRegistry.js";
 import { logger } from "../utils/logger.js";
-import { ocppLogsServer } from "./logsWebSocket.js";
+import { redisPublisher } from "../config/redis.js";
 /**
- * Log OCPP message to database and broadcast live
+ * Log OCPP message to database and broadcast live via Redis pub/sub
  */
 export async function logOcppMessage(chargerId, direction, message, transactionId) {
     try {
@@ -16,7 +16,8 @@ export async function logOcppMessage(chargerId, direction, message, transactionI
             },
             include: { charger: true },
         });
-        ocppLogsServer.broadcastLog(newLog);
+        // Publish log to Redis cluster to be picked up by any connected log WebSockets
+        await redisPublisher.publish("ocpp_logs", JSON.stringify(newLog));
     }
     catch (error) {
         logger.error(`Failed to log OCPP message: ${error}`);
@@ -48,7 +49,7 @@ export async function handleBootNotification(chargerId, payload) {
             data: { status: "active", last_heartbeat: new Date() },
         });
         // Update registry heartbeat
-        chargerRegistry.updateHeartbeat(chargerId);
+        await chargerRegistry.updateHeartbeat(chargerId);
         const response = {
             status: "Accepted",
             currentTime: new Date().toISOString(),
@@ -77,7 +78,7 @@ export async function handleHeartbeat(chargerId, payload) {
             data: { last_heartbeat: new Date() },
         });
         // Update registry heartbeat
-        chargerRegistry.updateHeartbeat(chargerId);
+        await chargerRegistry.updateHeartbeat(chargerId);
         const response = { currentTime: new Date().toISOString() };
         await logOcppMessage(chargerId, "out", response);
         return response;
@@ -171,7 +172,7 @@ export async function handleStartTransaction(chargerId, payload) {
             },
         });
         // Register transaction in memory
-        chargerRegistry.startTransaction(chargerId, transactionId, `Connector_${connectorId}`, idTag);
+        await chargerRegistry.startTransaction(chargerId, transactionId, `Connector_${connectorId}`, idTag);
         logger.info(`Transaction ${transactionId} started on charger ${chargerId}, connector ${connectorId}`);
         const response = {
             transactionId,
@@ -192,7 +193,7 @@ export async function handleStopTransaction(chargerId, payload) {
     const { transactionId, meterStop, timestamp, idTag } = payload;
     try {
         // End transaction in memory
-        const activeTransaction = chargerRegistry.endTransaction(chargerId, transactionId);
+        const activeTransaction = await chargerRegistry.endTransaction(chargerId, transactionId);
         if (!activeTransaction) {
             logger.warn(`Transaction ${transactionId} not found for charger ${chargerId}`);
         }
