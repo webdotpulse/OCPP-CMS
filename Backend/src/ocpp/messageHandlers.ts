@@ -11,7 +11,7 @@ export async function logOcppMessage(
   chargerId: number,
   direction: OcppDirection,
   message: any,
-  transactionId?: number
+  transactionId?: string | number
 ): Promise<void> {
   try {
     const newLog = await prisma.ocppLog.create({
@@ -19,7 +19,7 @@ export async function logOcppMessage(
         chargerId,
         direction,
         message: JSON.stringify(message ?? {}),
-        transactionId,
+        transactionId: transactionId ? String(transactionId) : null,
       },
       include: { charger: true },
     });
@@ -36,11 +36,24 @@ export async function logOcppMessage(
  */
 export async function handleBootNotification(
   chargerId: number,
-  payload: any
+  payload: any,
+  protocol?: string
 ): Promise<any> {
-  logger.info(`BootNotification received from charger ${chargerId}`, payload);
+  logger.info(`BootNotification received from charger ${chargerId} using protocol ${protocol || "ocpp1.6"}`, payload);
 
-  const { chargePointVendor, chargePointModel, chargePointSerialNumber } = payload;
+  let vendor: string;
+  let model: string;
+  let serialNumber: string;
+
+  if (protocol === "ocpp2.1" || protocol === "ocpp2.0.1") {
+    vendor = payload.chargingStation?.vendorName;
+    model = payload.chargingStation?.model;
+    serialNumber = payload.chargingStation?.serialNumber;
+  } else {
+    vendor = payload.chargePointVendor;
+    model = payload.chargePointModel;
+    serialNumber = payload.chargePointSerialNumber;
+  }
 
   try {
     // Check if charger exists in database
@@ -116,9 +129,10 @@ export async function handleHeartbeat(
  */
 export async function handleAuthorize(
   chargerId: number,
-  payload: any
+  payload: any,
+  protocol?: string
 ): Promise<any> {
-  const { idTag } = payload;
+  const idTag = payload.idToken?.idToken || payload.idTag;
 
   try {
     // Look up RFID tag in database
@@ -128,26 +142,34 @@ export async function handleAuthorize(
 
     if (!rfidUser || !rfidUser.active) {
       logger.warn(`Authorize rejected: RFID tag ${idTag} not found or inactive`);
-      const response = {
-        idTagInfo: {
-          status: "Invalid",
-        },
-      };
+      let response: any = {};
+      if (protocol === "ocpp2.1" || protocol === "ocpp2.0.1") {
+        response.idTokenInfo = { status: "Invalid" };
+      } else {
+        response.idTagInfo = { status: "Invalid" };
+      }
       await logOcppMessage(chargerId, "out", response);
       return response;
     }
 
     logger.info(`Authorize accepted: RFID tag ${idTag} (${rfidUser.name})`);
-    const response = {
-      idTagInfo: {
-        status: "Accepted",
-      },
-    };
+    let response: any = {};
+    if (protocol === "ocpp2.1" || protocol === "ocpp2.0.1") {
+      response.idTokenInfo = { status: "Accepted" };
+    } else {
+      response.idTagInfo = { status: "Accepted" };
+    }
     await logOcppMessage(chargerId, "out", response);
     return response;
   } catch (error) {
     logger.error(`Error handling Authorize: ${error}`);
-    return { idTagInfo: { status: "Invalid" } };
+    let errResponse: any = {};
+    if (protocol === "ocpp2.1" || protocol === "ocpp2.0.1") {
+      errResponse.idTokenInfo = { status: "Invalid" };
+    } else {
+      errResponse.idTagInfo = { status: "Invalid" };
+    }
+    return errResponse;
   }
 }
 
@@ -156,13 +178,14 @@ export async function handleAuthorize(
  */
 export async function handleStartTransaction(
   chargerId: number,
-  payload: any
+  payload: any,
+  protocol?: string
 ): Promise<any> {
   const { connectorId, idTag, meterStart, timestamp } = payload;
 
   try {
-    // Generate transaction ID (timestamp in seconds)
-    const transactionId = Math.floor(Date.now() / 1000);
+    // Use transaction ID from payload if provided (OCPP 2.1), else generate (OCPP 1.6)
+    const transactionId = payload.transactionId ? String(payload.transactionId) : String(Math.floor(Date.now() / 1000));
 
     // Check if RFID tag is valid (if provided)
     let rfidUserId: number | undefined;
@@ -172,10 +195,12 @@ export async function handleStartTransaction(
       });
 
       if (!rfidUser || !rfidUser.active) {
-        const response = {
-          transactionId: 0,
-          idTagInfo: { status: "Invalid" },
-        };
+        let response: any = { transactionId: 0 };
+        if (protocol === "ocpp2.1" || protocol === "ocpp2.0.1") {
+          response.idTokenInfo = { status: "Invalid" };
+        } else {
+          response.idTagInfo = { status: "Invalid" };
+        }
         await logOcppMessage(chargerId, "out", response, transactionId);
         return response;
       }
@@ -219,15 +244,23 @@ export async function handleStartTransaction(
     );
 
     logger.info(`Transaction ${transactionId} started on charger ${chargerId}, connector ${connectorId}`);
-    const response = {
-      transactionId,
-      idTagInfo: { status: "Accepted" },
-    };
+    let response: any = { transactionId };
+    if (protocol === "ocpp2.1" || protocol === "ocpp2.0.1") {
+      response.idTokenInfo = { status: "Accepted" };
+    } else {
+      response.idTagInfo = { status: "Accepted" };
+    }
     await logOcppMessage(chargerId, "out", response, transactionId);
     return response;
   } catch (error) {
     logger.error(`Error handling StartTransaction: ${error}`);
-    return { transactionId: 0, idTagInfo: { status: "Invalid" } };
+    let errResponse: any = { transactionId: 0 };
+    if (protocol === "ocpp2.1" || protocol === "ocpp2.0.1") {
+      errResponse.idTokenInfo = { status: "Invalid" };
+    } else {
+      errResponse.idTagInfo = { status: "Invalid" };
+    }
+    return errResponse;
   }
 }
 
@@ -236,13 +269,14 @@ export async function handleStartTransaction(
  */
 export async function handleStopTransaction(
   chargerId: number,
-  payload: any
+  payload: any,
+  protocol?: string
 ): Promise<any> {
   const { transactionId, meterStop, timestamp, idTag } = payload;
 
   try {
     // End transaction in memory
-    const activeTransaction = await chargerRegistry.endTransaction(chargerId, transactionId);
+    const activeTransaction = await chargerRegistry.endTransaction(chargerId, String(transactionId));
 
     if (!activeTransaction) {
       logger.warn(`Transaction ${transactionId} not found for charger ${chargerId}`);
@@ -250,7 +284,7 @@ export async function handleStopTransaction(
 
     // Update Transaction record
     const transaction = await prisma.transaction.findFirst({
-      where: { transactionId },
+      where: { transactionId: String(transactionId) },
     });
 
     if (transaction) {
@@ -267,7 +301,7 @@ export async function handleStopTransaction(
 
     // Update RfidSession if exists
     const rfidSession = await prisma.rfidSession.findFirst({
-      where: { transactionId },
+      where: { transactionId: String(transactionId) },
       include: { rfidUser: true },
     });
 
@@ -294,9 +328,12 @@ export async function handleStopTransaction(
       logger.info(`RfidSession ${rfidSession.id} completed. Amount due: Rs ${(amountDue / 100).toFixed(2)}`);
     }
 
-    const response = {
-      idTagInfo: { status: "Accepted" },
-    };
+    let response: any = {};
+    if (protocol === "ocpp2.1" || protocol === "ocpp2.0.1") {
+      response.idTokenInfo = { status: "Accepted" };
+    } else {
+      response.idTagInfo = { status: "Accepted" };
+    }
     await logOcppMessage(chargerId, "out", response, transactionId);
     return response;
   } catch (error) {
@@ -321,7 +358,7 @@ export async function handleMeterValues(
 
     // Update Transaction record
     const transaction = await prisma.transaction.findFirst({
-      where: { transactionId },
+      where: { transactionId: String(transactionId) },
     });
 
     if (transaction) {
@@ -336,7 +373,7 @@ export async function handleMeterValues(
 
     // Update RfidSession if exists
     const rfidSession = await prisma.rfidSession.findFirst({
-      where: { transactionId },
+      where: { transactionId: String(transactionId) },
     });
 
     if (rfidSession) {
@@ -362,7 +399,11 @@ export async function handleStatusNotification(
   chargerId: number,
   payload: any
 ): Promise<any> {
-  const { connectorId, errorCode, status, timestamp, info } = payload;
+  const connectorId = payload.evseId ?? payload.connectorId;
+  const status = payload.connectorStatus ?? payload.status;
+  const errorCode = payload.errorCode;
+  const timestamp = payload.timestamp;
+  const info = payload.info;
 
   try {
     // Update/Create connector status in database
@@ -417,6 +458,51 @@ export async function handleStatusNotification(
 }
 
 /**
+ * Handle TransactionEvent from charger (OCPP 2.1)
+ * This acts as an adapter, delegating to the 1.6 handlers
+ */
+export async function handleTransactionEvent(
+  chargerId: number,
+  payload: any,
+  protocol?: string
+): Promise<any> {
+  const { eventType, timestamp, transactionInfo, idToken, evse, meterValue } = payload;
+
+  const transactionId = transactionInfo?.transactionId;
+
+  if (eventType === "Started") {
+    const meterStart = meterValue?.[0]?.sampledValue?.[0]?.value ? parseFloat(meterValue[0].sampledValue[0].value) : 0;
+    return await handleStartTransaction(chargerId, {
+      connectorId: evse?.id,
+      idTag: idToken?.idToken,
+      meterStart,
+      timestamp,
+      transactionId
+    }, protocol);
+  } else if (eventType === "Updated") {
+    // MeterValues or charging state update
+    if (meterValue && meterValue.length > 0) {
+      await handleMeterValues(chargerId, {
+        connectorId: evse?.id,
+        transactionId,
+        meterValue
+      });
+    }
+    return {};
+  } else if (eventType === "Ended") {
+    const meterStop = meterValue?.[0]?.sampledValue?.[0]?.value ? parseFloat(meterValue[0].sampledValue[0].value) : 0;
+    return await handleStopTransaction(chargerId, {
+      transactionId,
+      meterStop,
+      timestamp,
+      idTag: idToken?.idToken
+    }, protocol);
+  }
+
+  return {};
+}
+
+/**
  * Main message router - dispatch to appropriate handler
  */
 export async function handleOcppMessage(
@@ -424,7 +510,8 @@ export async function handleOcppMessage(
   messageType: number,
   messageId: string,
   actionName: string,
-  payload: any
+  payload: any,
+  protocol: string = "ocpp1.6"
 ): Promise<any> {
   await logOcppMessage(chargerId, "in", [messageType, messageId, actionName, payload]);
 
@@ -435,7 +522,7 @@ export async function handleOcppMessage(
   switch (actionName) {
     case "BootNotification":
       logger.debug(`Routing action ${actionName} -> handleBootNotification`);
-      response = await handleBootNotification(chargerId, payload);
+      response = await handleBootNotification(chargerId, payload, protocol);
       break;
     case "Heartbeat":
       logger.debug(`Routing action ${actionName} -> handleHeartbeat`);
@@ -443,15 +530,15 @@ export async function handleOcppMessage(
       break;
     case "Authorize":
       logger.debug(`Routing action ${actionName} -> handleAuthorize`);
-      response = await handleAuthorize(chargerId, payload);
+      response = await handleAuthorize(chargerId, payload, protocol);
       break;
     case "StartTransaction":
       logger.debug(`Routing action ${actionName} -> handleStartTransaction`);
-      response = await handleStartTransaction(chargerId, payload);
+      response = await handleStartTransaction(chargerId, payload, protocol);
       break;
     case "StopTransaction":
       logger.debug(`Routing action ${actionName} -> handleStopTransaction`);
-      response = await handleStopTransaction(chargerId, payload);
+      response = await handleStopTransaction(chargerId, payload, protocol);
       break;
     case "MeterValues":
       logger.debug(`Routing action ${actionName} -> handleMeterValues`);
@@ -461,6 +548,10 @@ export async function handleOcppMessage(
     case "StatusNotification":
       logger.debug(`Routing action ${actionName} -> handleStatusNotification`);
       response = await handleStatusNotification(chargerId, payload);
+      break;
+    case "TransactionEvent":
+      logger.debug(`Routing action ${actionName} -> handleTransactionEvent`);
+      response = await handleTransactionEvent(chargerId, payload, protocol);
       break;
     default:
       logger.warn(`Unknown action name: ${actionName}`);

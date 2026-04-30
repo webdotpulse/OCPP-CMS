@@ -33,7 +33,7 @@ export interface OcppMessage {
   timestamp: Date;
   direction: OcppDirection;
   chargerId: number;
-  transactionId?: number;
+  transactionId?: string | number;
   message: string;
 }
 
@@ -44,11 +44,11 @@ export interface ChargerConnection {
   chargerName: string;
   connectedAt: Date;
   lastHeartbeat: Date;
-  transactions: Map<number, ActiveTransaction>;
+  transactions: Map<string | number, ActiveTransaction>;
 }
 
 export interface ActiveTransaction {
-  transactionId: number;
+  transactionId: string | number;
   connectorName: string;
   idTag?: string;
   startTime: Date;
@@ -147,7 +147,7 @@ export interface RemoteStartRequest {
 
 export interface RemoteStopRequest {
   chargerId: number;
-  transactionId: number;
+  transactionId: string | number;
 }
 
 // Smart Charging Requests
@@ -156,7 +156,7 @@ export interface SetChargingProfileRequest {
   connectorId: number;
   csChargingProfiles: {
     chargingProfileId: number;
-    transactionId?: number;
+    transactionId?: string | number;
     stackLevel: number;
     chargingProfilePurpose: "ChargePointMaxProfile" | "TxDefaultProfile" | "TxProfile";
     chargingProfileKind: "Absolute" | "Recurring" | "Relative";

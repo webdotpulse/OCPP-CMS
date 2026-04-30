@@ -115,7 +115,7 @@ model RfidUser {
 // RFID post-paid charging sessions
 model RfidSession {
   id                  Int      @id @default(autoincrement())
-  transactionId       Int      @unique
+  transactionId       String   @unique
   rfidUserId          Int
   charger_id         Int
   connectorName      String
@@ -137,7 +137,7 @@ model RfidSession {
 // Simplified transaction tracking
 model Transaction {
   id                Int      @id @default(autoincrement())
-  transactionId     Int
+  transactionId     String
   connectorName     String
   charger_id        Int
   charger           Charger  @relation(fields: [charger_id], references: [charger_id])
@@ -157,7 +157,7 @@ model OcppLog {
   id            Int      @id @default(autoincrement())
   chargerId     Int
   charger       Charger  @relation(fields: [chargerId], references: [charger_id])
-  transactionId Int?
+  transactionId String?
   timestamp     DateTime  @default(now())
   direction     String
   message       String
@@ -178,7 +178,7 @@ model Tariff {
 // Payment Transactions (for Stripe, Mollie, etc.)
 model PaymentTransaction {
   id              Int      @id @default(autoincrement())
-  transactionId   Int      @unique
+  transactionId   String   @unique
   provider        String   // "stripe", "mollie", etc.
   paymentIntentId String?  // ID from provider
   amount          Float
