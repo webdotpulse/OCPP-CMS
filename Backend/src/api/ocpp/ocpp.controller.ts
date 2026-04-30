@@ -8,6 +8,7 @@ import {
   getConfiguration,
   changeConfiguration,
   triggerMessage,
+  getConnectedChargers as getConnected,
 } from "../../ocpp/remoteControl.js";
 import type { RemoteStartRequest, RemoteStopRequest } from "../../types/index.js";
 
@@ -15,9 +16,7 @@ import type { RemoteStartRequest, RemoteStopRequest } from "../../types/index.js
  * GET /api/ocpp/connected - Get list of connected chargers
  */
 export const getConnectedChargers = (req: Request, res: Response) => {
-  const connectedChargers = Array.from(
-    (global as any).chargerRegistry?.chargers?.keys() || []
-  );
+  const connectedChargers = getConnected();
   res.json({
     success: true,
     data: connectedChargers,

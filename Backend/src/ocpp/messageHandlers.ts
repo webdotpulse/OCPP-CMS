@@ -2,10 +2,10 @@ import { prisma } from "../config/database.js";
 import { chargerRegistry } from "./chargerRegistry.js";
 import { logger } from "../utils/logger.js";
 import type { OcppDirection } from "../types/index.js";
-import { ocppLogsServer } from "./logsWebSocket.js";
+import { redisPublisher } from "../config/redis.js";
 
 /**
- * Log OCPP message to database and broadcast live
+ * Log OCPP message to database and broadcast live via Redis pub/sub
  */
 export async function logOcppMessage(
   chargerId: number,
@@ -24,7 +24,8 @@ export async function logOcppMessage(
       include: { charger: true },
     });
     
-    ocppLogsServer.broadcastLog(newLog as any);
+    // Publish log to Redis cluster to be picked up by any connected log WebSockets
+    await redisPublisher.publish("ocpp_logs", JSON.stringify(newLog));
   } catch (error) {
     logger.error(`Failed to log OCPP message: ${error}`);
   }
@@ -64,7 +65,7 @@ export async function handleBootNotification(
     });
 
     // Update registry heartbeat
-    chargerRegistry.updateHeartbeat(chargerId);
+    await chargerRegistry.updateHeartbeat(chargerId);
 
     const response = {
       status: "Accepted",
@@ -99,7 +100,7 @@ export async function handleHeartbeat(
     });
 
     // Update registry heartbeat
-    chargerRegistry.updateHeartbeat(chargerId);
+    await chargerRegistry.updateHeartbeat(chargerId);
 
     const response = { currentTime: new Date().toISOString() };
     await logOcppMessage(chargerId, "out", response);
@@ -210,7 +211,7 @@ export async function handleStartTransaction(
     });
 
     // Register transaction in memory
-    chargerRegistry.startTransaction(
+    await chargerRegistry.startTransaction(
       chargerId,
       transactionId,
       `Connector_${connectorId}`,
@@ -241,7 +242,7 @@ export async function handleStopTransaction(
 
   try {
     // End transaction in memory
-    const activeTransaction = chargerRegistry.endTransaction(chargerId, transactionId);
+    const activeTransaction = await chargerRegistry.endTransaction(chargerId, transactionId);
 
     if (!activeTransaction) {
       logger.warn(`Transaction ${transactionId} not found for charger ${chargerId}`);

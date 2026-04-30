@@ -112,7 +112,7 @@ export const getChargerStatus = async (req, res) => {
             success: true,
             data: {
                 ...charger,
-                isOnline: isChargerConnected(chargerId),
+                isOnline: await isChargerConnected(chargerId),
                 connectorsCount: await prisma.connector.count({
                     where: { charger_id: chargerId },
                 }),

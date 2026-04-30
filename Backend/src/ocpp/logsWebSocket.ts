@@ -3,6 +3,7 @@ import { config } from "../config/index.js";
 import { logger } from "../utils/logger.js";
 import { prisma } from "../config/database.js";
 import type { OcppMessage } from "../types/index.js";
+import { redisSubscriber } from "../config/redis.js";
 
 class OcppLogsServer {
   private wss: WebSocketServer | null = null;
@@ -18,6 +19,29 @@ class OcppLogsServer {
 
     this.wss.on("error", (error) => {
       logger.error(`OCPP logs WebSocket error: ${error}`);
+    });
+
+    this.setupRedisSubscription();
+  }
+
+  private setupRedisSubscription(): void {
+    redisSubscriber.subscribe("ocpp_logs", (err) => {
+      if (err) logger.error(`Failed to subscribe to ocpp_logs: ${err}`);
+      else logger.info("Subscribed to ocpp_logs Redis channel");
+    });
+
+    redisSubscriber.on("message", (channel, message) => {
+      if (channel === "ocpp_logs") {
+        try {
+          const log = JSON.parse(message);
+          this.broadcast({
+            type: "log",
+            log,
+          });
+        } catch (error) {
+          logger.error(`Error processing Redis pub/sub log: ${error}`);
+        }
+      }
     });
   }
 

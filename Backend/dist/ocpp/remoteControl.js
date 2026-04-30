@@ -13,7 +13,7 @@ export async function remoteStartTransaction(request) {
     const { chargerId, connectorId, idTag } = request;
     try {
         // Check if charger is connected
-        if (!chargerRegistry.isConnected(chargerId)) {
+        if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
             return { status: "Rejected", error: "Charger not connected" };
         }
         // Send RemoteStartTransaction using correct OCPP 1.6 CALL format
@@ -28,7 +28,7 @@ export async function remoteStartTransaction(request) {
                 idTag,
             }
         ];
-        await chargerRegistry.sendToCharger(chargerId, message);
+        await chargerRegistry.publishCommand(chargerId, message);
         logger.info(`Remote start sent to charger ${chargerId}, connector ${connectorId}, idTag ${idTag}`);
         return { status: "Accepted" };
     }
@@ -45,7 +45,7 @@ export async function remoteStopTransaction(request) {
     const { chargerId, transactionId } = request;
     try {
         // Check if charger is connected
-        if (!chargerRegistry.isConnected(chargerId)) {
+        if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
             return { status: "Rejected", error: "Charger not connected" };
         }
         // Send RemoteStopTransaction using correct OCPP 1.6 CALL format
@@ -56,7 +56,7 @@ export async function remoteStopTransaction(request) {
             "RemoteStopTransaction",
             { transactionId }
         ];
-        await chargerRegistry.sendToCharger(chargerId, message);
+        await chargerRegistry.publishCommand(chargerId, message);
         logger.info(`Remote stop sent to charger ${chargerId}, transaction ${transactionId}`);
         return { status: "Accepted" };
     }
@@ -71,7 +71,7 @@ export async function remoteStopTransaction(request) {
  */
 export async function getConfiguration(chargerId, key) {
     try {
-        if (!chargerRegistry.isConnected(chargerId)) {
+        if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
             return { status: "Rejected", error: "Charger not connected" };
         }
         // Send GetConfiguration using correct OCPP 1.6 CALL format
@@ -82,7 +82,7 @@ export async function getConfiguration(chargerId, key) {
             "GetConfiguration",
             { key: key || [] }
         ];
-        await chargerRegistry.sendToCharger(chargerId, message);
+        await chargerRegistry.publishCommand(chargerId, message);
         logger.info(`GetConfiguration sent to charger ${chargerId}, key: ${key || "all"}`);
         return { status: "Accepted" };
     }
@@ -97,7 +97,7 @@ export async function getConfiguration(chargerId, key) {
  */
 export async function changeConfiguration(chargerId, configurationKey) {
     try {
-        if (!chargerRegistry.isConnected(chargerId)) {
+        if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
             return { status: "Rejected", error: "Charger not connected" };
         }
         // Send ChangeConfiguration using correct OCPP 1.6 CALL format
@@ -108,7 +108,7 @@ export async function changeConfiguration(chargerId, configurationKey) {
             "ChangeConfiguration",
             { configurationKey }
         ];
-        await chargerRegistry.sendToCharger(chargerId, message);
+        await chargerRegistry.publishCommand(chargerId, message);
         logger.info(`ChangeConfiguration sent to charger ${chargerId}`);
         return { status: "Accepted" };
     }
@@ -123,7 +123,7 @@ export async function changeConfiguration(chargerId, configurationKey) {
  */
 export async function resetCharger(chargerId, type) {
     try {
-        if (!chargerRegistry.isConnected(chargerId)) {
+        if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
             return { status: "Rejected", error: "Charger not connected" };
         }
         // Send Reset using correct OCPP 1.6 CALL format
@@ -134,7 +134,7 @@ export async function resetCharger(chargerId, type) {
             "Reset",
             { type }
         ];
-        await chargerRegistry.sendToCharger(chargerId, message);
+        await chargerRegistry.publishCommand(chargerId, message);
         logger.info(`Reset sent to charger ${chargerId}, type: ${type}`);
         return { status: "Accepted" };
     }
@@ -149,7 +149,7 @@ export async function resetCharger(chargerId, type) {
  */
 export async function unlockConnector(chargerId, connectorId) {
     try {
-        if (!chargerRegistry.isConnected(chargerId)) {
+        if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
             return { status: "Rejected", error: "Charger not connected" };
         }
         // Send UnlockConnector using correct OCPP 1.6 CALL format
@@ -160,7 +160,7 @@ export async function unlockConnector(chargerId, connectorId) {
             "UnlockConnector",
             { connectorId }
         ];
-        await chargerRegistry.sendToCharger(chargerId, message);
+        await chargerRegistry.publishCommand(chargerId, message);
         logger.info(`Unlock sent to charger ${chargerId}, connector ${connectorId}`);
         return { status: "Accepted" };
     }
@@ -175,7 +175,7 @@ export async function unlockConnector(chargerId, connectorId) {
  */
 export async function triggerMessage(chargerId, requestedMessage, connectorId) {
     try {
-        if (!chargerRegistry.isConnected(chargerId)) {
+        if (!(await chargerRegistry.isConnectedGlobally(chargerId))) {
             return { status: "Rejected", error: "Charger not connected" };
         }
         // Send TriggerMessage using correct OCPP 1.6 CALL format
@@ -190,7 +190,7 @@ export async function triggerMessage(chargerId, requestedMessage, connectorId) {
             "TriggerMessage",
             payload
         ];
-        await chargerRegistry.sendToCharger(chargerId, message);
+        await chargerRegistry.publishCommand(chargerId, message);
         logger.info(`TriggerMessage sent to charger ${chargerId}, message: ${requestedMessage}`);
         return { status: "Accepted" };
     }
@@ -208,6 +208,6 @@ export function getConnectedChargers() {
 /**
  * Check if a charger is connected
  */
-export function isChargerConnected(chargerId) {
-    return chargerRegistry.isConnected(chargerId);
+export async function isChargerConnected(chargerId) {
+    return chargerRegistry.isConnectedGlobally(chargerId);
 }

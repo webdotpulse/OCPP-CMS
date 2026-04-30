@@ -15,5 +15,7 @@ export const config = {
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || "24h",
     // Logging
     logLevel: process.env.LOG_LEVEL || "info",
+    // Redis
+    redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
 };
 export const logLevels = ["error", "warn", "info", "debug"];
