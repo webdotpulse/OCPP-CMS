@@ -55,12 +55,12 @@ export default function StationsPage() {
     <AppShell>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Charging Stations</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Locations</h1>
           <p className="text-muted-foreground">Manage physical site locations for your EV chargers.</p>
         </div>
         <Link href="/stations/new">
           <Button>
-            <Plus className="mr-2 h-4 w-4" /> Add Station
+            <Plus className="mr-2 h-4 w-4" /> Add Location
           </Button>
         </Link>
       </div>

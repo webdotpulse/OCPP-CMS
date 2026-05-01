@@ -214,18 +214,20 @@ class ChargerRegistry {
    * Publish an OCPP command via Redis to reach the correct instance
    */
   async publishCommand(chargerId: number, message: any): Promise<void> {
-    const cachedSession = await redisClient.hgetall(this.getRedisKey(chargerId));
-    if (!cachedSession || cachedSession.status !== "connected") {
-      throw new Error(`Charger ${chargerId} is not connected anywhere in cluster`);
-    }
-
     // If we have the local connection, we can just send directly as an optimization
     if (this.isConnected(chargerId)) {
       await this.sendToCharger(chargerId, message);
-    } else {
-      // Publish to cluster
-      await redisPublisher.publish("ocpp_commands", JSON.stringify({ chargerId, payload: message }));
+      return;
     }
+
+    const cachedSession = await redisClient.hgetall(this.getRedisKey(chargerId));
+    // hgetall returns empty object {} if key doesn't exist
+    if (!cachedSession || Object.keys(cachedSession).length === 0 || cachedSession.status !== "connected") {
+      throw new Error(`Charger ${chargerId} is not connected anywhere in cluster`);
+    }
+
+    // Publish to cluster
+    await redisPublisher.publish("ocpp_commands", JSON.stringify({ chargerId, payload: message }));
   }
 
   /**

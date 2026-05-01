@@ -4,6 +4,7 @@ import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Zap, Play, Square, RefreshCw, Unlock, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -25,10 +26,10 @@ export function RemoteControlPanel({ chargerId }: RemoteControlPanelProps) {
     setIsLoading(true);
     try {
       const response = await api.post(`/ocpp/${endpoint}`, { chargerId, ...payload });
-      alert(`Command sent successfully: ${response.data.message || 'Accepted'}`);
+      toast.success(`Command sent successfully: ${response.data.message || 'Accepted'}`);
     } catch (error: any) {
       logger.error(`Failed to send ${endpoint}`, error);
-      alert(error.response?.data?.error || `Failed to send ${endpoint} command`);
+      toast.error(error.response?.data?.error || `Failed to send ${endpoint} command`);
     } finally {
       setIsLoading(false);
     }

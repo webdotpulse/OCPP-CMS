@@ -94,14 +94,15 @@ export interface UpdateChargerDto {
 export interface CreateStationDto {
   station_name: string;
   street_name: string;
-  state: string;
   city: string;
+  state?: string;
   postal_code: string;
+  country?: string;
   latitude: number;
   longitude: number;
-  on_site_person_name: string;
-  on_site_contact_details: string;
-  emergency_contact: string;
+  on_site_person_name?: string;
+  on_site_contact_details?: string;
+  emergency_contact?: string;
   status?: string;
   owner_id: number;
 }

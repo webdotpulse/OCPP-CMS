@@ -522,6 +522,9 @@ export async function handleOcppMessage(
 ): Promise<any> {
   await logOcppMessage(chargerId, "in", [messageType, messageId, actionName, payload]);
 
+  // Update registry heartbeat on any incoming message
+  await chargerRegistry.updateHeartbeat(chargerId);
+
   // In OCPP 1.6, messageType 2 = CALL (all requests)
   // The actionName determines which handler to route to
   let response: any;

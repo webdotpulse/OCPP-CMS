@@ -4,6 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/hooks/useAuth"
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const montserrat = Montserrat({subsets:['latin'],variable:'--font-sans'})
 
@@ -28,6 +29,7 @@ export default function RootLayout({
           <AuthProvider>
             {children}
           </AuthProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

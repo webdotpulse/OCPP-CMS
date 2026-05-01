@@ -69,7 +69,7 @@ export default function StationDetailPage() {
         <div className="space-y-4">
           <Link href="/stations">
             <Button variant="ghost" size="sm" className="-ml-4 text-muted-foreground">
-              <ChevronLeft className="mr-2 h-4 w-4" /> Back to Stations
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Locations
             </Button>
           </Link>
           <div className="flex items-center gap-4">
@@ -81,7 +81,7 @@ export default function StationDetailPage() {
         </div>
         <Link href={`/stations/${id}/edit`}>
           <Button>
-            <Edit className="mr-2 h-4 w-4" /> Edit Station
+            <Edit className="mr-2 h-4 w-4" /> Edit Location
           </Button>
         </Link>
       </div>
