@@ -38,7 +38,7 @@ class ChargerRegistry {
     return `charger:${chargerId}:session`;
   }
 
-  private getTransactionKey(chargerId: number, transactionId: number): string {
+  private getTransactionKey(chargerId: number, transactionId: string | number): string {
     return `charger:${chargerId}:transaction:${transactionId}`;
   }
 
@@ -141,7 +141,7 @@ class ChargerRegistry {
   /**
    * Start an active transaction for a charger
    */
-  async startTransaction(chargerId: number, transactionId: number, connectorName: string, idTag?: string): Promise<void> {
+  async startTransaction(chargerId: number, transactionId: string | number, connectorName: string, idTag?: string): Promise<void> {
     const transactionData: ActiveTransaction = {
       transactionId,
       connectorName,
@@ -168,7 +168,7 @@ class ChargerRegistry {
   /**
    * End a transaction for a charger
    */
-  async endTransaction(chargerId: number, transactionId: number): Promise<ActiveTransaction | undefined> {
+  async endTransaction(chargerId: number, transactionId: string | number): Promise<ActiveTransaction | undefined> {
     let transaction: ActiveTransaction | undefined;
 
     const connection = this.chargers.get(chargerId);
@@ -193,7 +193,7 @@ class ChargerRegistry {
   /**
    * Get active transaction for a charger
    */
-  async getTransaction(chargerId: number, transactionId: number): Promise<ActiveTransaction | undefined> {
+  async getTransaction(chargerId: number, transactionId: string | number): Promise<ActiveTransaction | undefined> {
     const connection = this.chargers.get(chargerId);
     if (connection) {
       const tx = connection.transactions.get(transactionId);

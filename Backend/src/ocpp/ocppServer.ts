@@ -9,7 +9,15 @@ class OcppServer {
   private wss: WebSocketServer | null = null;
 
   start(): void {
-    this.wss = new WebSocketServer({ port: config.ocppPort });
+    this.wss = new WebSocketServer({
+      port: config.ocppPort,
+      handleProtocols: (protocols, request) => {
+        if (protocols.has("ocpp2.1")) return "ocpp2.1";
+        if (protocols.has("ocpp2.0.1")) return "ocpp2.0.1";
+        if (protocols.has("ocpp1.6")) return "ocpp1.6";
+        return false;
+      },
+    });
 
     this.wss.on("listening", () => {
       logger.info(`OCPP server listening on port ${config.ocppPort}`);
@@ -74,8 +82,8 @@ class OcppServer {
         try {
           const message = JSON.parse(data.toString());
           // Log incoming message
-          logger.info(`📩 [OCPP IN] Charger ${chargerId}: ${JSON.stringify(message)}`);
-          await this.handleOcppMessage(chargerId, message);
+          logger.info(`📩 [OCPP IN] Charger ${chargerId} [${ws.protocol}]: ${JSON.stringify(message)}`);
+          await this.handleOcppMessage(chargerId, message, ws.protocol);
         } catch (error) {
           logger.error(`Error parsing OCPP message: ${error}`);
         }
@@ -109,7 +117,8 @@ class OcppServer {
 
   private async handleOcppMessage(
     chargerId: number,
-    message: any
+    message: any,
+    protocol: string
   ): Promise<void> {
     // OCPP 1.6 message formats:
     //   CALL:       [2, messageId, actionName, payload]
@@ -152,7 +161,8 @@ class OcppServer {
         messageType,
         messageId,
         actionName,
-        payload
+        payload,
+        protocol
       );
 
       // Send CALLRESULT: [3, messageId, responsePayload]
