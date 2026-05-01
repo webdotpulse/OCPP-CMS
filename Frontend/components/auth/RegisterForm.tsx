@@ -41,7 +41,7 @@ export function RegisterForm() {
       await api.post('/auth/register', {
         email: data.email,
         password: data.password,
-        role: 'admin' // Fixed role for first-time account creation
+        role: 'user' // Fixed default role
       });
       setSuccess(true);
     } catch (err: any) {
@@ -79,7 +79,7 @@ export function RegisterForm() {
       <CardHeader className="space-y-1 border-b pb-4">
         <CardTitle className="text-2xl font-bold tracking-tight">Create Account</CardTitle>
         <CardDescription>
-          Register for the Open-Source OCPP CMS admin portal
+          Register for the Open-Source OCPP CMS portal
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>

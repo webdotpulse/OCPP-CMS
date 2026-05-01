@@ -84,9 +84,11 @@ export function OcppLogViewer() {
     if (!wsUrl && typeof window !== 'undefined') {
       const isHttps = window.location.protocol === 'https:';
       const wsProtocol = isHttps ? 'wss://' : 'ws://';
-      wsUrl = `${wsProtocol}${window.location.hostname}:3001`;
+      // Route through the Next.js API proxy or directly to the backend
+      const host = window.location.host;
+      wsUrl = `${wsProtocol}${host}/api/ocpp-logs`;
     } else if (!wsUrl) {
-      wsUrl = 'ws://localhost:3001';
+      wsUrl = 'ws://localhost:3000/api/ocpp-logs';
     }
     
     const socket = new WebSocket(wsUrl);

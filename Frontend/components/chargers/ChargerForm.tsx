@@ -17,19 +17,20 @@ import { useAuth } from "@/hooks/useAuth";
 
 const chargerSchema = z.object({
   name: z.string().min(2, "Charger name is required"),
-  model: z.string().min(2, "Model is required"),
-  manufacturer: z.string().min(2, "Manufacturer is required"),
-  serial_number: z.string().min(2, "Serial number is required"),
+  model: z.string().optional(),
+  manufacturer: z.string().optional(),
+  serial_number: z.string().optional(),
   manufacturing_date: z.string(),
   power_capacity: z.number().positive(),
   power_consumption: z.number().nonnegative(),
-  firmware_version: z.string().min(1, "Firmware version is required"),
+  firmware_version: z.string().optional(),
   warranty_period: z.string(),
   service_contacts: z.string(),
   charging_station_id: z.number().positive("Must assign a station"),
   latitude: z.number().min(-90).max(90).optional().nullable(),
   longitude: z.number().min(-180).max(180).optional().nullable(),
   tariffId: z.number().optional(),
+  owner_id: z.number().optional(),
 });
 
 type ChargerFormValues = z.infer<typeof chargerSchema>;
@@ -38,6 +39,7 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
   const router = useRouter();
   const [stations, setStations] = useState<any[]>([]);
   const [tariffs, setTariffs] = useState<any[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
@@ -60,18 +62,28 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
   useEffect(() => {
     const fetchStations = async () => {
       try {
-        const [stationsRes, tariffsRes] = await Promise.all([
+        const promises = [
           api.get('/stations'),
           api.get('/tariffs')
-        ]);
-        setStations(stationsRes.data);
-        setTariffs(tariffsRes.data);
+        ];
+
+        if (user?.role === 'admin') {
+          promises.push(api.get('/users'));
+        }
+
+        const results = await Promise.all(promises);
+        setStations(results[0].data);
+        setTariffs(results[1].data);
+
+        if (results[2]) {
+          setUsersList(results[2].data);
+        }
       } catch (error) {
         logger.error("Failed to fetch initial data", error);
       }
     };
-    fetchStations();
-  }, []);
+    if (user) fetchStations();
+  }, [user]);
 
   const stationId = watch('charging_station_id');
 
@@ -81,7 +93,7 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
       const payload = {
         ...data,
         manufacturing_date: new Date(data.manufacturing_date).toISOString(),
-        owner_id: initialData?.owner_id || user?.id,
+        owner_id: data.owner_id || initialData?.owner_id || user?.id,
       };
 
       if (initialData) {
@@ -205,6 +217,29 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
                 </SelectContent>
               </Select>
             </div>
+
+            {user?.role === 'admin' && (
+              <div className="space-y-2">
+                <Label htmlFor="owner_id">Assign to Client</Label>
+                <Select
+                  value={watch('owner_id')?.toString() || initialData?.owner_id?.toString() || user.id.toString()}
+                  onValueChange={(val) => setValue('owner_id', parseInt(val))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a client user" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {usersList.map(u => (
+                      <SelectItem key={u.id} value={u.id.toString()}>
+                        {u.email} ({u.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Select the user who will manage this charger.</p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="service_contacts">Service Contacts</Label>
               <Input id="service_contacts" {...register('service_contacts')} />

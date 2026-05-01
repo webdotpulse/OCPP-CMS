@@ -12,12 +12,21 @@ export const getAllStations = async (req: Request, res: Response) => {
     const { page: queryPage, limit: queryLimit, status } = req.query;
     const { page, limit } = parsePagination(queryPage, queryLimit);
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
     const skip = (page - 1) * limit;
     const take = limit;
 
     const where: any = {};
     if (status) {
       where.status = status;
+    }
+
+    if (userRole !== "admin") {
+      where.owner_id = userId;
     }
 
     const [stations, total] = await Promise.all([

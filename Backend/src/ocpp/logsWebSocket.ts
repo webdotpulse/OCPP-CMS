@@ -4,15 +4,21 @@ import { logger } from "../utils/logger.js";
 import { prisma } from "../config/database.js";
 import type { OcppMessage } from "../types/index.js";
 import { redisSubscriber } from "../config/redis.js";
+import http from "http";
 
 class OcppLogsServer {
   private wss: WebSocketServer | null = null;
 
-  start(): void {
-    this.wss = new WebSocketServer({ port: config.ocppLogsPort });
+  start(server: http.Server): void {
+    // Instead of binding to a separate port, bind to the existing Express HTTP server
+    this.wss = new WebSocketServer({ noServer: true });
 
-    this.wss.on("listening", () => {
-      logger.info(`OCPP logs WebSocket listening on port ${config.ocppLogsPort}`);
+    server.on("upgrade", (request, socket, head) => {
+      if (request.url === "/api/ocpp-logs") {
+        this.wss?.handleUpgrade(request, socket, head, (ws) => {
+          this.wss?.emit("connection", ws, request);
+        });
+      }
     });
 
     this.wss.on("connection", this.handleConnection.bind(this));
@@ -22,6 +28,7 @@ class OcppLogsServer {
     });
 
     this.setupRedisSubscription();
+    logger.info(`OCPP logs WebSocket attached to main HTTP server at /api/ocpp-logs`);
   }
 
   private setupRedisSubscription(): void {

@@ -15,6 +15,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const rfidSchema = z.object({
   rfid_tag: z.string().min(4, "RFID Tag ID is required"),
@@ -25,6 +26,7 @@ const rfidSchema = z.object({
   address: z.string().optional(),
   type: z.string().min(1),
   active: z.boolean(),
+  owner_id: z.number().optional(),
 });
 
 type RfidFormValues = z.infer<typeof rfidSchema>;
@@ -32,6 +34,7 @@ type RfidFormValues = z.infer<typeof rfidSchema>;
 export function RfidForm({ initialData }: { initialData?: any }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [usersList, setUsersList] = useState<any[]>([]);
   const { user } = useAuth();
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<RfidFormValues>({
@@ -46,12 +49,18 @@ export function RfidForm({ initialData }: { initialData?: any }) {
   const active = watch('active');
   const type = watch('type');
 
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      api.get('/users').then(res => setUsersList(res.data)).catch(err => logger.error(err));
+    }
+  }, [user]);
+
   const onSubmit = async (data: RfidFormValues) => {
     setIsLoading(true);
     try {
       const payload = {
         ...data,
-        owner_id: initialData?.owner_id || user?.id,
+        owner_id: data.owner_id || initialData?.owner_id || user?.id,
       };
       if (initialData) {
         await api.put(`/rfid/${initialData.rfid_user_id}`, payload);
@@ -140,6 +149,28 @@ export function RfidForm({ initialData }: { initialData?: any }) {
                 <Label htmlFor="active">{active ? 'Authorized (Active)' : 'Unauthorized'}</Label>
               </div>
             </div>
+
+            {user?.role === 'admin' && (
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="owner_id">Assign to Client</Label>
+                <Select
+                  value={watch('owner_id')?.toString() || initialData?.owner_id?.toString() || user.id.toString()}
+                  onValueChange={(val) => setValue('owner_id', parseInt(val))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a client user" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {usersList.map(u => (
+                      <SelectItem key={u.id} value={u.id.toString()}>
+                        {u.email} ({u.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Select the user who will manage this RFID.</p>
+              </div>
+            )}
           </div>
 
         </CardContent>

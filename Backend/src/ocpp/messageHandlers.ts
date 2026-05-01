@@ -74,7 +74,14 @@ export async function handleBootNotification(
     // Update charger info if needed
     await prisma.charger.update({
       where: { charger_id: chargerId },
-      data: { status: "active", last_heartbeat: new Date() },
+      data: {
+        status: "active",
+        last_heartbeat: new Date(),
+        manufacturer: vendor,
+        model: model,
+        serial_number: serialNumber,
+        firmware_version: payload.chargePointSerialNumber ? payload.firmwareVersion : payload.chargingStation?.firmwareVersion || payload.firmwareVersion || "Unknown",
+      },
     });
 
     // Update registry heartbeat

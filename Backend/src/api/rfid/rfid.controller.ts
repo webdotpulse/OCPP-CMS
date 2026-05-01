@@ -12,12 +12,20 @@ export const getAllRfidUsers = async (req: Request, res: Response) => {
     const { page: queryPage, limit: queryLimit, active, search } = req.query;
     const { page, limit } = parsePagination(queryPage, queryLimit);
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
     const skip = (page - 1) * limit;
     const take = limit;
 
     const where: any = {};
     if (active !== undefined) {
       where.active = active === "true";
+    }
+    if (userRole !== "admin") {
+      where.owner_id = userId;
     }
     if (search) {
       where.OR = [

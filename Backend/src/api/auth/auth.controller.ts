@@ -9,7 +9,7 @@ import { logger } from "../../utils/logger.js";
  */
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password, role = "admin" } = req.body;
+    const { email, password, role = "user" } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
