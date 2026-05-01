@@ -14,33 +14,33 @@ datasource db {
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
-  password   String
+  password  String
   role      String   @default("admin")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   chargingStations ChargingStation[]
   chargers         Charger[]
-  rfidUsers RfidUser[]
+  rfidUsers        RfidUser[]
 }
 
 // Charging station / Site location
 model ChargingStation {
-  id                    Int       @id @default(autoincrement())
-  station_name          String
-  street_name           String
-  state                 String
-  city                  String
-  postal_code           String
-  latitude              Float
-  longitude             Float
-  on_site_person_name    String
+  id                      Int      @id @default(autoincrement())
+  station_name            String
+  street_name             String
+  state                   String
+  city                    String
+  postal_code             String
+  latitude                Float
+  longitude               Float
+  on_site_person_name     String
   on_site_contact_details String
-  emergency_contact      String
-  status                String    @default("active")
-  owner_id              Int
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime @updatedAt
+  emergency_contact       String
+  status                  String   @default("active")
+  owner_id                Int
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   owner    User      @relation(fields: [owner_id], references: [id])
   chargers Charger[]
@@ -48,47 +48,47 @@ model ChargingStation {
 
 // Charging Point / Charger
 model Charger {
-  charger_id           Int       @id @default(autoincrement())
-  model                String
-  name                 String    @unique
-  manufacturer          String
-  serial_number         String    @unique
-  manufacturing_date    DateTime
-  power_capacity       Float
-  power_consumption    Float
-  status               String    @default("offline")
-  last_heartbeat       DateTime  @default("1970-01-01T00:00:00.000Z")
-  firmware_version      String
-  warranty_period       String
-  service_contacts      String
-  latitude             Float?
-  longitude            Float?
-  owner_id             Int
-  charging_station_id   Int
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime @updatedAt
+  charger_id          Int      @id @default(autoincrement())
+  model               String
+  name                String   @unique
+  manufacturer        String
+  serial_number       String   @unique
+  manufacturing_date  DateTime
+  power_capacity      Float
+  power_consumption   Float
+  status              String   @default("offline")
+  last_heartbeat      DateTime @default("1970-01-01T00:00:00.000Z")
+  firmware_version    String
+  warranty_period     String
+  service_contacts    String
+  latitude            Float?
+  longitude           Float?
+  owner_id            Int
+  charging_station_id Int
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  owner           User             @relation(fields: [owner_id], references: [id])
+  owner           User            @relation(fields: [owner_id], references: [id])
   chargingStation ChargingStation @relation(fields: [charging_station_id], references: [id])
-  connectors   Connector[]
-  transactions Transaction[]
-  ocppLogs     OcppLog[]
-  rfidSessions RfidSession[]
-  tariffs      Tariff[]
+  connectors      Connector[]
+  transactions    Transaction[]
+  ocppLogs        OcppLog[]
+  rfidSessions    RfidSession[]
+  tariffs         Tariff[]
 }
 
 // Charge connector (multiple per charger)
 model Connector {
-  connector_id   Int     @id @default(autoincrement())
-  connector_name String  @default("Connector 1")
+  connector_id   Int      @id @default(autoincrement())
+  connector_name String   @default("Connector 1")
   status         String
   current_type   String
   max_current    Float?
   max_power      Float?
   mac_address    String?
   charger_id     Int
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   charger Charger @relation(fields: [charger_id], references: [charger_id])
 }
@@ -97,56 +97,56 @@ model Connector {
 model RfidUser {
   rfid_user_id Int      @id @default(autoincrement())
   rfid_tag     String   @unique
-  name          String
-  email         String?
-  phone         String?
-  company_name  String?
-  address       String?
-  type          String   @default("postpaid")
-  active        Boolean  @default(true)
-  owner_id      Int
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  name         String
+  email        String?
+  phone        String?
+  company_name String?
+  address      String?
+  type         String   @default("postpaid")
+  active       Boolean  @default(true)
+  owner_id     Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  owner      User         @relation(fields: [owner_id], references: [id])
+  owner        User          @relation(fields: [owner_id], references: [id])
   rfidSessions RfidSession[]
 }
 
 // RFID post-paid charging sessions
 model RfidSession {
-  id                  Int      @id @default(autoincrement())
-  transactionId       String   @unique
-  rfidUserId          Int
-  charger_id         Int
-  connectorName      String
-  charger            Charger  @relation(fields: [charger_id], references: [charger_id])
-  startTime          DateTime  @default(now())
-  endTime            DateTime?
-  initialMeterValue  Float?
-  finalMeterValue    Float?
-  energyConsumed     Float    @default(0)
-  tariffRate         Float?
-  amountDue          Float    @default(0)
-  status             String   @default("charging")
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                Int       @id @default(autoincrement())
+  transactionId     String    @unique
+  rfidUserId        Int
+  charger_id        Int
+  connectorName     String
+  charger           Charger   @relation(fields: [charger_id], references: [charger_id])
+  startTime         DateTime  @default(now())
+  endTime           DateTime?
+  initialMeterValue Float?
+  finalMeterValue   Float?
+  energyConsumed    Float     @default(0)
+  tariffRate        Float?
+  amountDue         Float     @default(0)
+  status            String    @default("charging")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   rfidUser RfidUser @relation(fields: [rfidUserId], references: [rfid_user_id])
 }
 
 // Simplified transaction tracking
 model Transaction {
-  id                Int      @id @default(autoincrement())
+  id                Int       @id @default(autoincrement())
   transactionId     String
   connectorName     String
   charger_id        Int
-  charger           Charger  @relation(fields: [charger_id], references: [charger_id])
+  charger           Charger   @relation(fields: [charger_id], references: [charger_id])
   startTime         DateTime  @default(now())
   endTime           DateTime?
   initialMeterValue Float?
   finalMeterValue   Float?
-  energyConsumed    Float    @default(0)
-  status            String   @default("initiated")
+  energyConsumed    Float     @default(0)
+  status            String    @default("initiated")
   idTag             String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -158,19 +158,19 @@ model OcppLog {
   chargerId     Int
   charger       Charger  @relation(fields: [chargerId], references: [charger_id])
   transactionId String?
-  timestamp     DateTime  @default(now())
+  timestamp     DateTime @default(now())
   direction     String
   message       String
 }
 
 // Optional: Tariff for pricing
 model Tariff {
-  tariff_id          Int      @id @default(autoincrement())
-  tariff_name        String   @unique
-  charge             Float
-  electricity_rate   Float
-  createdAt          DateTime  @default(now())
-  updatedAt DateTime @updatedAt
+  tariff_id        Int      @id @default(autoincrement())
+  tariff_name      String   @unique
+  charge           Float
+  electricity_rate Float
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   chargers Charger[]
 }
@@ -179,8 +179,8 @@ model Tariff {
 model PaymentTransaction {
   id              Int      @id @default(autoincrement())
   transactionId   String   @unique
-  provider        String   // "stripe", "mollie", etc.
-  paymentIntentId String?  // ID from provider
+  provider        String // "stripe", "mollie", etc.
+  paymentIntentId String? // ID from provider
   amount          Float
   currency        String   @default("EUR")
   status          String   @default("pending") // "pending", "succeeded", "failed"
@@ -190,12 +190,12 @@ model PaymentTransaction {
 
 // OCPI Endpoints for roaming
 model OcpiEndpoint {
-  id              Int      @id @default(autoincrement())
-  name            String
-  url             String
-  token           String   // Token used for auth
-  version         String   @default("2.2.1")
-  status          String   @default("active")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  url       String
+  token     String // Token used for auth
+  version   String   @default("2.2.1")
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

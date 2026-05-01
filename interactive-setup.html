@@ -431,6 +431,31 @@ wss://ocpp.mobilitypulse.com/OCPP/1.6/{chargerId}
 \`\`\`
 *Note the use of \`wss://\` instead of \`ws://\` now that SSL is active.*
 
+## Cleanup / Restart Installation
+
+If you encounter issues during installation or want to restart from scratch, you can use the following commands to wipe the current installation:
+
+\`\`\`bash
+# Remove application directory
+sudo rm -rf /var/www/ocpp-cms
+
+# Drop database and user
+sudo -u postgres psql -c "DROP DATABASE IF EXISTS ocpp_cms;"
+sudo -u postgres psql -c "DROP USER IF EXISTS cms_user;"
+
+# Stop and delete PM2 processes
+pm2 delete ocpp-backend || true
+pm2 delete ocpp-frontend || true
+pm2 save --force
+
+# Remove Nginx configurations
+sudo rm -f /etc/nginx/sites-available/ocpp.mobilitypulse.com
+sudo rm -f /etc/nginx/sites-enabled/ocpp.mobilitypulse.com
+sudo rm -f /etc/nginx/sites-available/ui.mobilitypulse.com
+sudo rm -f /etc/nginx/sites-enabled/ui.mobilitypulse.com
+sudo systemctl restart nginx
+\`\`\`
+
 ## Troubleshooting Production
 
 - **Nginx Error Logs:** \`sudo tail -f /var/log/nginx/error.log\`
