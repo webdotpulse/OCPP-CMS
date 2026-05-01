@@ -20,13 +20,14 @@ const stationSchema = z.object({
   station_name: z.string().min(2, "Station name is required"),
   street_name: z.string().min(2, "Street name is required"),
   city: z.string().min(2, "City is required"),
-  state: z.string().min(2, "State is required"),
+  state: z.string().optional(),
   postal_code: z.string().min(2, "Postal code is required"),
+  country: z.string().optional(),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
-  on_site_person_name: z.string().min(2, "Contact person is required"),
-  on_site_contact_details: z.string().min(2, "Contact details are required"),
-  emergency_contact: z.string().min(2, "Emergency contact is required"),
+  on_site_person_name: z.string().optional(),
+  on_site_contact_details: z.string().optional(),
+  emergency_contact: z.string().optional(),
   owner_id: z.number().optional(),
 });
 
@@ -81,12 +82,12 @@ export function StationForm({ initialData }: StationFormProps) {
   return (
     <Card className="w-full max-w-2xl shadow-sm">
       <CardHeader className="border-b pb-4">
-        <CardTitle>{initialData ? 'Edit Station' : 'Create New Station'}</CardTitle>
+        <CardTitle>{initialData ? 'Edit Location' : 'Create New Location'}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="station_name">Station Name</Label>
+            <Label htmlFor="station_name">Location Name</Label>
             <Input id="station_name" {...register('station_name')} />
             {errors.station_name && <p className="text-sm text-destructive">{errors.station_name.message}</p>}
           </div>
@@ -117,6 +118,12 @@ export function StationForm({ initialData }: StationFormProps) {
             </div>
           </div>
           
+          <div className="space-y-2">
+            <Label htmlFor="country">Country</Label>
+            <Input id="country" {...register('country')} />
+            {errors.country && <p className="text-sm text-destructive">{errors.country.message}</p>}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
             <div className="space-y-2">
               <Label htmlFor="latitude">Latitude</Label>
@@ -175,7 +182,7 @@ export function StationForm({ initialData }: StationFormProps) {
           <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {initialData ? 'Update Station' : 'Create Station'}
+            {initialData ? 'Update Location' : 'Create Location'}
           </Button>
         </CardFooter>
       </form>

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Loader2, Download, Upload } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -38,11 +39,11 @@ export function ChargerConfigurationPanel({ chargerId }: ChargerConfigurationPan
         setEditedValues({});
         setSelectedKeys(new Set());
       } else {
-        alert(response.data.error || 'Failed to fetch configuration');
+        toast.error(response.data.error || 'Failed to fetch configuration');
       }
     } catch (error: any) {
       logger.error('Failed to get configuration', error);
-      alert(error.response?.data?.error || 'Failed to fetch configuration');
+      toast.error(error.response?.data?.error || 'Failed to fetch configuration');
     } finally {
       setIsLoading(false);
     }
@@ -84,13 +85,13 @@ export function ChargerConfigurationPanel({ chargerId }: ChargerConfigurationPan
         configurationKey
       });
 
-      alert(`Set Configuration result: ${response.data.status || 'Accepted'}`);
+      toast.success(`Set Configuration result: ${response.data.status || 'Accepted'}`);
 
       // Refresh configurations to see applied changes
       await fetchConfiguration();
     } catch (error: any) {
       logger.error('Failed to set configuration', error);
-      alert(error.response?.data?.error || 'Failed to set configuration');
+      toast.error(error.response?.data?.error || 'Failed to set configuration');
     } finally {
       setIsSubmitting(false);
     }

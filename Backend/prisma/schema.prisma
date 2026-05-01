@@ -28,14 +28,15 @@ model ChargingStation {
   id                      Int      @id @default(autoincrement())
   station_name            String
   street_name             String
-  state                   String
   city                    String
+  state                   String?
   postal_code             String
+  country                 String?
   latitude                Float
   longitude               Float
-  on_site_person_name     String
-  on_site_contact_details String
-  emergency_contact       String
+  on_site_person_name     String?
+  on_site_contact_details String?
+  emergency_contact       String?
   status                  String   @default("active")
   owner_id                Int
   createdAt               DateTime @default(now())

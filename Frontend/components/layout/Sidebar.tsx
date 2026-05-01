@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 import {
   BarChart3,
   MapPin,
@@ -10,13 +11,14 @@ import {
   Settings,
   TerminalSquare,
   WalletCards,
-  Zap
+  Zap,
+  Users
 } from 'lucide-react';
 
 const routes = [
   { name: 'Dashboard', path: '/dashboard', icon: BarChart3 },
-  { name: 'Stations', path: '/stations', icon: MapPin },
   { name: 'Chargers', path: '/chargers', icon: Zap },
+  { name: 'Locations', path: '/stations', icon: MapPin },
   { name: 'Transactions', path: '/transactions', icon: Banknote },
   { name: 'RFID Tags', path: '/rfid', icon: CreditCard },
   { name: 'Tariffs', path: '/tariffs', icon: WalletCards },
@@ -26,6 +28,7 @@ const routes = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   return (
     <aside className="w-64 border-r bg-card flex flex-col h-screen fixed left-0 top-0">
@@ -55,6 +58,20 @@ export function Sidebar() {
             </Link>
           );
         })}
+        {user?.role === 'admin' && (
+          <Link
+            href="/users"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+              pathname.startsWith('/users')
+                ? "bg-primary/10 text-primary font-medium"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+          >
+            <Users className="h-4 w-4" />
+            Customers
+          </Link>
+        )}
       </nav>
       <div className="p-4 border-t text-xs text-muted-foreground text-center">
         MobilityPulse CPMS v1.0
