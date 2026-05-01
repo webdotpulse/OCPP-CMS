@@ -15,13 +15,21 @@ export const getAllChargers = async (req: Request, res: Response) => {
     const { page: queryPage, limit: queryLimit } = req.query;
     const { page, limit } = parsePagination(queryPage, queryLimit);
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
     const skip = (page - 1) * limit;
     const take = limit;
+
+    const where = userRole === "admin" ? {} : { owner_id: userId };
 
     const [chargers, total] = await Promise.all([
       prisma.charger.findMany({
         skip,
         take,
+        where,
         include: {
           chargingStation: true,
           connectors: true,
@@ -29,7 +37,7 @@ export const getAllChargers = async (req: Request, res: Response) => {
         },
         orderBy: { createdAt: "desc" },
       }),
-      prisma.charger.count(),
+      prisma.charger.count({ where }),
     ]);
 
     res.json({
@@ -186,6 +194,10 @@ export const createCharger = async (req: Request, res: Response) => {
     const charger = await prisma.charger.create({
       data: {
         ...rest,
+        model: rest.model || "Pending",
+        manufacturer: rest.manufacturer || "Pending",
+        serial_number: rest.serial_number || "Pending",
+        firmware_version: rest.firmware_version || "Pending",
         tariffs: tariffId ? { connect: { tariff_id: tariffId } } : undefined,
       },
       include: { chargingStation: true, owner: true, tariffs: true },

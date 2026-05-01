@@ -13,6 +13,7 @@ import { ChevronLeft, Edit, Zap, Info, Clock, CheckCircle } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { RemoteControlPanel } from "@/components/chargers/RemoteControlPanel";
 import { ConnectorList } from "@/components/chargers/ConnectorList";
+import { ChargerConfigurationPanel } from "@/components/chargers/ChargerConfigurationPanel";
 
 interface ChargerDetail {
   charger_id: number;
@@ -112,6 +113,11 @@ export default function ChargerDetailPage() {
         )}
       </div>
 
+      {/* Configuration Panel */}
+      <div className="mb-6">
+        <ChargerConfigurationPanel chargerId={charger.charger_id} />
+      </div>
+
       {/* Secondary Section: Hardware and Communications (Single Line) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <Card className="col-span-2">
@@ -131,6 +137,10 @@ export default function ChargerDetailPage() {
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Firmware Version</p>
                 <p className="font-medium">{charger.firmware_version}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Protocol Version</p>
+                <p className="font-medium">{charger.status !== 'offline' ? 'OCPP 1.6' : 'Unknown'}</p>
               </div>
               <div className="space-y-1 flex items-center gap-4">
                 <div>

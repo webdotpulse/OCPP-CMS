@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect } from "react";
 
 const stationSchema = z.object({
   station_name: z.string().min(2, "Station name is required"),
@@ -25,6 +27,7 @@ const stationSchema = z.object({
   on_site_person_name: z.string().min(2, "Contact person is required"),
   on_site_contact_details: z.string().min(2, "Contact details are required"),
   emergency_contact: z.string().min(2, "Emergency contact is required"),
+  owner_id: z.number().optional(),
 });
 
 type StationFormValues = z.infer<typeof stationSchema>;
@@ -36,9 +39,10 @@ interface StationFormProps {
 export function StationForm({ initialData }: StationFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [usersList, setUsersList] = useState<any[]>([]);
   const { user } = useAuth();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<StationFormValues>({
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<StationFormValues>({
     resolver: zodResolver(stationSchema),
     defaultValues: initialData || {
       latitude: 0,
@@ -46,12 +50,18 @@ export function StationForm({ initialData }: StationFormProps) {
     },
   });
 
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      api.get('/users').then(res => setUsersList(res.data)).catch(err => logger.error(err));
+    }
+  }, [user]);
+
   const onSubmit = async (data: StationFormValues) => {
     setIsLoading(true);
     try {
       const payload = {
         ...data,
-        owner_id: initialData?.owner_id || user?.id,
+        owner_id: data.owner_id || initialData?.owner_id || user?.id,
       };
       if (initialData) {
         await api.put(`/stations/${initialData.id}`, payload);
@@ -138,6 +148,28 @@ export function StationForm({ initialData }: StationFormProps) {
             <Input id="emergency_contact" {...register('emergency_contact')} />
             {errors.emergency_contact && <p className="text-sm text-destructive">{errors.emergency_contact.message}</p>}
           </div>
+
+          {user?.role === 'admin' && (
+            <div className="space-y-2">
+              <Label htmlFor="owner_id">Assign to Client</Label>
+              <Select
+                value={watch('owner_id')?.toString() || initialData?.owner_id?.toString() || user.id.toString()}
+                onValueChange={(val) => setValue('owner_id', parseInt(val))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a client user" />
+                </SelectTrigger>
+                <SelectContent>
+                  {usersList.map(u => (
+                    <SelectItem key={u.id} value={u.id.toString()}>
+                      {u.email} ({u.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Select the user who will manage this station.</p>
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:justify-between">
           <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>

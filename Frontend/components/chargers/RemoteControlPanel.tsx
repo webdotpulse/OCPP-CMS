@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Zap, Play, Square, RefreshCw, Unlock, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface RemoteControlPanelProps {
   chargerId: number;
@@ -18,6 +19,7 @@ export function RemoteControlPanel({ chargerId }: RemoteControlPanelProps) {
   const [tagId, setTagId] = useState("");
   const [connectorId, setConnectorId] = useState("1");
   const [transactionId, setTransactionId] = useState("");
+  const [triggerMessageTarget, setTriggerMessageTarget] = useState("StatusNotification");
 
   const sendCommand = async (endpoint: string, payload: any = {}) => {
     setIsLoading(true);
@@ -65,13 +67,28 @@ export function RemoteControlPanel({ chargerId }: RemoteControlPanelProps) {
           >
             <Unlock className="mr-2 h-4 w-4" /> Unlock Connector
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => sendCommand('trigger-message', { requestedMessage: 'StatusNotification' })}
-            disabled={isLoading}
-          >
-            <Send className="mr-2 h-4 w-4" /> Trigger Status
-          </Button>
+          <div className="flex items-center gap-2">
+            <Select value={triggerMessageTarget} onValueChange={setTriggerMessageTarget}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select Message" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BootNotification">BootNotification</SelectItem>
+                <SelectItem value="DiagnosticsStatusNotification">DiagnosticsStatusNotification</SelectItem>
+                <SelectItem value="FirmwareStatusNotification">FirmwareStatusNotification</SelectItem>
+                <SelectItem value="Heartbeat">Heartbeat</SelectItem>
+                <SelectItem value="MeterValues">MeterValues</SelectItem>
+                <SelectItem value="StatusNotification">StatusNotification</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              onClick={() => sendCommand('trigger-message', { requestedMessage: triggerMessageTarget })}
+              disabled={isLoading || !triggerMessageTarget}
+            >
+              <Send className="mr-2 h-4 w-4" /> Trigger Message
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
