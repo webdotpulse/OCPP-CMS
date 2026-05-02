@@ -39,7 +39,7 @@ export function LiveSessionsTable() {
   }, []);
 
   return (
-    <Card className="col-span-3">
+    <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

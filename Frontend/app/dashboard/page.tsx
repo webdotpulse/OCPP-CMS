@@ -2,7 +2,6 @@ import { AppShell } from '@/components/layout/AppShell';
 import { KpiCards } from '@/components/dashboard/KpiCards';
 import { LiveSessionsTable } from '@/components/dashboard/LiveSessionsTable';
 import { ConnectorDistribution } from '@/components/dashboard/ConnectorDistribution';
-import { ChargerStatusGrid } from '@/components/dashboard/ChargerStatusGrid';
 import { LocationsMap } from '@/components/dashboard/LocationsMap';
 
 export default function DashboardPage() {
@@ -23,11 +22,9 @@ export default function DashboardPage() {
           <ConnectorDistribution />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="mt-4">
           <LiveSessionsTable />
         </div>
-
-        <ChargerStatusGrid />
       </div>
     </AppShell>
   );

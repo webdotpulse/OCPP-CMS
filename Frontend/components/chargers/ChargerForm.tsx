@@ -28,6 +28,7 @@ const chargerSchema = z.object({
   longitude: z.number().min(-180).max(180).optional().nullable(),
   tariffId: z.number().optional(),
   owner_id: z.number().optional(),
+  charge_group_id: z.number().optional().nullable(),
 });
 
 type ChargerFormValues = z.infer<typeof chargerSchema>;
@@ -36,6 +37,7 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
   const router = useRouter();
   const [stations, setStations] = useState<any[]>([]);
   const [tariffs, setTariffs] = useState<any[]>([]);
+  const [chargeGroups, setChargeGroups] = useState<any[]>([]);
   const [usersList, setUsersList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
@@ -47,10 +49,12 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
       latitude: initialData?.latitude || undefined,
       longitude: initialData?.longitude || undefined,
       tariffId: initialData?.tariffs?.[0]?.tariff_id || undefined,
+      charge_group_id: initialData?.charge_group_id || undefined,
     } : {
       latitude: undefined,
       longitude: undefined,
       tariffId: initialData?.tariffs?.[0]?.tariff_id || undefined,
+      charge_group_id: undefined,
     },
   });
 
@@ -59,7 +63,8 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
       try {
         const promises = [
           api.get('/stations'),
-          api.get('/tariffs')
+          api.get('/tariffs'),
+          api.get('/charge-groups')
         ];
 
         if (user?.role === 'admin') {
@@ -69,9 +74,10 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
         const results = await Promise.all(promises);
         setStations(results[0].data);
         setTariffs(results[1].data);
+        setChargeGroups(results[2].data?.data || results[2].data);
 
-        if (results[2]) {
-          setUsersList(results[2].data);
+        if (results[3]) {
+          setUsersList(results[3].data);
         }
       } catch (error) {
         logger.error("Failed to fetch initial data", error);
@@ -177,6 +183,26 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="charge_group_id">Assign Charge group</Label>
+              <Select
+                value={watch('charge_group_id')?.toString() || 'none'}
+                onValueChange={(val) => setValue('charge_group_id', val === 'none' ? null : parseInt(val))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a charge group" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Charge group</SelectItem>
+                  {chargeGroups.map(group => (
+                    <SelectItem key={group.id} value={group.id.toString()}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
              <div className="space-y-2">
               <Label htmlFor="tariffId">Assigned Tariff Plan</Label>
               <Select 

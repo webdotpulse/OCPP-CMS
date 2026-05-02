@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { logger } from '@/lib/logger';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useTheme } from 'next-themes';
 import 'leaflet/dist/leaflet.css';
 
 // Dynamically import Leaflet components to avoid SSR window issues
@@ -31,6 +32,7 @@ export function LocationsMap() {
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [icon, setIcon] = useState<any>(null);
+  const { theme, systemTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -72,7 +74,7 @@ export function LocationsMap() {
 
   // Calculate bounds if stations exist
   let mapCenter = defaultCenter;
-  let mapZoom = 5;
+  let mapZoom = 8;
 
   if (stations.length > 0) {
     const lats = stations.map(s => s.latitude);
@@ -89,13 +91,15 @@ export function LocationsMap() {
     }
   }
 
+  const isDark = theme === 'dark' || (theme === 'system' && systemTheme === 'dark');
+
   return (
-    <Card className="col-span-1 md:col-span-3">
+    <Card className="col-span-1 md:col-span-3 flex flex-col">
       <CardHeader>
         <CardTitle>Station Locations</CardTitle>
         <CardDescription>Geographic overview of your charging network</CardDescription>
       </CardHeader>
-      <CardContent className="h-[400px] p-0 relative overflow-hidden rounded-b-xl z-0">
+      <CardContent className="flex-1 min-h-[400px] p-0 relative overflow-hidden z-0">
         {isLoading || !icon ? (
           <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -105,7 +109,12 @@ export function LocationsMap() {
             center={mapCenter}
             zoom={mapZoom}
             scrollWheelZoom={false}
-            style={{ height: '100%', width: '100%', zIndex: 0 }}
+            style={{
+              height: '100%',
+              width: '100%',
+              zIndex: 0,
+              filter: isDark ? 'invert(1) hue-rotate(180deg) brightness(95%) contrast(90%)' : 'none'
+            }}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

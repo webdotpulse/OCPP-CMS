@@ -1,30 +1,50 @@
 
 > Frontend@0.0.1 dev
-> next dev -p 3002 --turbopack
+> next dev -p 3002 --turbopack -p 3002
 
    ▲ Next.js 15.5.15 (Turbopack)
    - Local:        http://localhost:3002
    - Network:      http://192.168.0.2:3002
 
  ✓ Starting...
- ✓ Compiled middleware in 359ms
- ✓ Ready in 1938ms
- ○ Compiling / ...
- ✓ Compiled / in 6.8s
- GET / 307 in 7947ms
+ ✓ Compiled middleware in 468ms
+ ✓ Ready in 2.3s
  ○ Compiling /dashboard ...
- ✓ Compiled /dashboard in 6.3s
- GET /dashboard 200 in 6837ms
+ ✓ Compiled /dashboard in 12.6s
+ GET /dashboard 200 in 14023ms
  ○ Compiling /login ...
- ✓ Compiled /login in 2.8s
- GET /login 200 in 2979ms
- GET /login 200 in 357ms
- GET /dashboard 200 in 249ms
+ ✓ Compiled /login in 2.6s
+ GET /login 200 in 2692ms
  ○ Compiling /chargers ...
- ✓ Compiled /chargers in 1017ms
- GET /chargers 200 in 1342ms
- GET /login 200 in 199ms
- GET /dashboard 200 in 122ms
+ ✓ Compiled /chargers in 752ms
+ GET /chargers 200 in 1064ms
+Failed to proxy http://localhost:3000/api/chargers [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+ GET /login 200 in 384ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 3.4s
+ GET /login 200 in 319ms
+ GET /chargers 200 in 229ms
+Failed to proxy http://localhost:3000/api/chargers [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+ GET /login 200 in 180ms
+ GET /dashboard 200 in 226ms
+ GET /login 200 in 125ms
+ GET /login 200 in 238ms
+ GET /chargers 200 in 237ms
+ GET /dashboard 200 in 260ms
+ GET /dashboard 200 in 228ms
+ GET /dashboard 200 in 229ms
+ GET /dashboard 200 in 338ms
+ ○ Compiling /chargers/[id] ...
+ ✓ Compiled /chargers/[id] in 943ms
+ GET /chargers/1 200 in 1913ms
+ GET /chargers/1 200 in 219ms
+ GET /chargers/1 200 in 316ms
+ GET /chargers/1 200 in 229ms
  ○ Compiling /charge-groups ...
- ✓ Compiled /charge-groups in 832ms
- GET /charge-groups 200 in 1035ms
+ ✓ Compiled /charge-groups in 743ms
+ GET /charge-groups 200 in 945ms
+ ✓ Compiled in 557ms
+ ✓ Compiled /login in 130ms
+ GET /login 200 in 1727ms

@@ -92,9 +92,11 @@ export default function ChargeGroupsPage() {
                   <TableCell>{format(new Date(group.createdAt), 'MMM d, yyyy')}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" disabled>
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <Link href={`/charge-groups/${group.id}/edit`}>
+                        <Button variant="ghost" size="icon">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Link>
                       <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(group.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
