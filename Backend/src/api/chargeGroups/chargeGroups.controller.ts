@@ -1,0 +1,149 @@
+import { Request, Response } from "express";
+import { prisma } from "../../config/database.js";
+import { logger } from "../../utils/logger.js";
+import { parseId, parsePagination } from "../../utils/validation.js";
+
+/**
+ * GET /api/charge-groups
+ */
+export const getAllChargeGroups = async (req: Request, res: Response) => {
+  try {
+    const { page: queryPage, limit: queryLimit } = req.query;
+    const { page, limit } = parsePagination(queryPage, queryLimit);
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const [groups, total] = await Promise.all([
+      prisma.chargeGroup.findMany({
+        skip,
+        take,
+        include: {
+          chargers: { include: { charger: true } },
+          users: { include: { user: true, tariff: true } }
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.chargeGroup.count(),
+    ]);
+
+    res.json({
+      success: true,
+      data: groups,
+      pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) },
+    });
+  } catch (error) {
+    logger.error(`Error getting charge groups: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to get charge groups" });
+  }
+};
+
+/**
+ * GET /api/charge-groups/:id
+ */
+export const getChargeGroupById = async (req: Request, res: Response) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: "Invalid ID" });
+
+    const group = await prisma.chargeGroup.findUnique({
+      where: { id },
+      include: {
+        chargers: { include: { charger: true } },
+        users: { include: { user: true, tariff: true } }
+      },
+    });
+
+    if (!group) return res.status(404).json({ success: false, error: "Not found" });
+    res.json({ success: true, data: group });
+  } catch (error) {
+    logger.error(`Error getting charge group: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to get charge group" });
+  }
+};
+
+/**
+ * POST /api/charge-groups
+ */
+export const createChargeGroup = async (req: Request, res: Response) => {
+  try {
+    const { name, description, chargerIds, users } = req.body;
+
+    if (!name) return res.status(400).json({ success: false, error: "Name is required" });
+
+    const group = await prisma.chargeGroup.create({
+      data: {
+        name,
+        description,
+        chargers: {
+          create: chargerIds?.map((chargerId: number) => ({ chargerId })) || []
+        },
+        users: {
+          create: users?.map((u: any) => ({ userId: u.userId, tariffId: u.tariffId })) || []
+        }
+      },
+      include: {
+        chargers: true,
+        users: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: group });
+  } catch (error) {
+    logger.error(`Error creating charge group: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to create charge group" });
+  }
+};
+
+/**
+ * PUT /api/charge-groups/:id
+ */
+export const updateChargeGroup = async (req: Request, res: Response) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: "Invalid ID" });
+
+    const { name, description, chargerIds, users } = req.body;
+
+    // We do a transaction to clear existing relations and recreate them
+    const group = await prisma.$transaction(async (tx) => {
+      if (chargerIds) {
+        await tx.chargeGroupCharger.deleteMany({ where: { chargeGroupId: id } });
+      }
+      if (users) {
+        await tx.chargeGroupUser.deleteMany({ where: { chargeGroupId: id } });
+      }
+
+      return tx.chargeGroup.update({
+        where: { id },
+        data: {
+          name,
+          description,
+          chargers: chargerIds ? { create: chargerIds.map((chargerId: number) => ({ chargerId })) } : undefined,
+          users: users ? { create: users.map((u: any) => ({ userId: u.userId, tariffId: u.tariffId })) } : undefined
+        },
+        include: { chargers: true, users: true }
+      });
+    });
+
+    res.json({ success: true, data: group });
+  } catch (error) {
+    logger.error(`Error updating charge group: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to update charge group" });
+  }
+};
+
+/**
+ * DELETE /api/charge-groups/:id
+ */
+export const deleteChargeGroup = async (req: Request, res: Response) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: "Invalid ID" });
+
+    await prisma.chargeGroup.delete({ where: { id } });
+    res.json({ success: true, message: "Deleted" });
+  } catch (error) {
+    logger.error(`Error deleting charge group: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to delete charge group" });
+  }
+};

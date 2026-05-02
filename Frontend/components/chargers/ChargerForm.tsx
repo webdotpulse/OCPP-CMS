@@ -20,7 +20,6 @@ const chargerSchema = z.object({
   model: z.string().optional(),
   manufacturer: z.string().optional(),
   serial_number: z.string().optional(),
-  manufacturing_date: z.string(),
   power_capacity: z.number().positive(),
   power_consumption: z.number().nonnegative(),
   firmware_version: z.string().optional(),
@@ -47,7 +46,6 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
     resolver: zodResolver(chargerSchema),
     defaultValues: initialData ? {
       ...initialData,
-      manufacturing_date: new Date(initialData.manufacturing_date).toISOString().substring(0, 10),
       latitude: initialData?.latitude || undefined,
       longitude: initialData?.longitude || undefined,
       tariffId: initialData?.tariffs?.[0]?.tariff_id || undefined,
@@ -92,7 +90,6 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
     try {
       const payload = {
         ...data,
-        manufacturing_date: new Date(data.manufacturing_date).toISOString(),
         owner_id: data.owner_id || initialData?.owner_id || user?.id,
       };
 
@@ -177,19 +174,14 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
               <Input id="power_capacity" type="number" step="any" {...register('power_capacity', { valueAsNumber: true })} />
               {errors.power_capacity && <p className="text-sm text-destructive">{errors.power_capacity.message}</p>}
             </div>
-             <div className="space-y-2">
-              <Label htmlFor="manufacturing_date">Manufacturing Date</Label>
-              <Input id="manufacturing_date" type="date" {...register('manufacturing_date')} />
-              {errors.manufacturing_date && <p className="text-sm text-destructive">{errors.manufacturing_date.message}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
             <div className="space-y-2">
               <Label htmlFor="power_consumption">Standby Power Consumption (kWh/day)</Label>
               <Input id="power_consumption" type="number" step="any" {...register('power_consumption', { valueAsNumber: true })} />
               {errors.power_consumption && <p className="text-sm text-destructive">{errors.power_consumption.message}</p>}
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
              <div className="space-y-2">
               <Label htmlFor="warranty_period">Warranty Period</Label>
               <Input id="warranty_period" {...register('warranty_period')} placeholder="e.g. 2 Years" />

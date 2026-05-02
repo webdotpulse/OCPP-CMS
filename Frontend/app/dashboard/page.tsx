@@ -3,6 +3,7 @@ import { KpiCards } from '@/components/dashboard/KpiCards';
 import { LiveSessionsTable } from '@/components/dashboard/LiveSessionsTable';
 import { ConnectorDistribution } from '@/components/dashboard/ConnectorDistribution';
 import { ChargerStatusGrid } from '@/components/dashboard/ChargerStatusGrid';
+import { LocationsMap } from '@/components/dashboard/LocationsMap';
 
 export default function DashboardPage() {
   return (
@@ -18,8 +19,12 @@ export default function DashboardPage() {
         <KpiCards />
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <LiveSessionsTable />
+          <LocationsMap />
           <ConnectorDistribution />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <LiveSessionsTable />
         </div>
 
         <ChargerStatusGrid />

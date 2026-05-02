@@ -3,6 +3,7 @@ import { prisma } from "../../config/database.js";
 import { logger } from "../../utils/logger.js";
 import { parsePagination, parseId } from "../../utils/validation.js";
 import { AuthRequest } from "../../middleware/auth.js";
+import bcrypt from "bcrypt";
 
 /**
  * GET /api/users - Get all users
@@ -23,6 +24,8 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
           id: true,
           email: true,
           role: true,
+          userType: true,
+          companyName: true,
           createdAt: true,
         },
         orderBy: { createdAt: "desc" },
@@ -78,6 +81,8 @@ export const updateUserRole = async (req: AuthRequest, res: Response) => {
         id: true,
         email: true,
         role: true,
+        userType: true,
+        companyName: true,
       }
     });
 
@@ -88,5 +93,56 @@ export const updateUserRole = async (req: AuthRequest, res: Response) => {
       success: false,
       error: "Failed to update user role",
     });
+  }
+};
+
+export const createUser = async (req: AuthRequest, res: Response) => {
+  try {
+    const { email, password, role, userType, companyName } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: "Email and password required" });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ success: false, error: "Email already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role: role || "user",
+        userType: userType || "private",
+        companyName: companyName || null
+      },
+      select: { id: true, email: true, role: true, userType: true, companyName: true }
+    });
+
+    res.status(201).json({ success: true, data: user });
+  } catch (error) {
+    logger.error(`Error creating user: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to create user" });
+  }
+};
+
+export const deleteUser = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = parseId(req.params.id);
+    if (!id) return res.status(400).json({ success: false, error: "Invalid ID" });
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (user?.role === 'admin' && user?.id === 1) {
+      return res.status(400).json({ success: false, error: "Cannot delete root admin" });
+    }
+
+    await prisma.user.delete({ where: { id } });
+    res.json({ success: true, message: "Deleted" });
+  } catch (error) {
+    logger.error(`Error deleting user: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to delete user" });
   }
 };

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllUsers, updateUserRole } from "./users.controller.js";
+import { getAllUsers, updateUserRole, createUser, deleteUser } from "./users.controller.js";
 import { requireAdmin } from "../../middleware/auth.js";
 
 const router = Router();
@@ -8,6 +8,8 @@ const router = Router();
 router.use(requireAdmin as any);
 
 router.get("/", getAllUsers as any);
+router.post("/", createUser as any);
 router.put("/:id/role", updateUserRole as any);
+router.delete("/:id", deleteUser as any);
 
 export default router;

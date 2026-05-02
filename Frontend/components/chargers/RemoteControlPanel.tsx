@@ -21,6 +21,8 @@ export function RemoteControlPanel({ chargerId }: RemoteControlPanelProps) {
   const [connectorId, setConnectorId] = useState("1");
   const [transactionId, setTransactionId] = useState("");
   const [triggerMessageTarget, setTriggerMessageTarget] = useState("StatusNotification");
+  const [showRemoteStart, setShowRemoteStart] = useState(false);
+  const [showRemoteStop, setShowRemoteStop] = useState(false);
 
   const sendCommand = async (endpoint: string, payload: any = {}) => {
     setIsLoading(true);
@@ -90,48 +92,70 @@ export function RemoteControlPanel({ chargerId }: RemoteControlPanelProps) {
               <Send className="mr-2 h-4 w-4" /> Trigger Message
             </Button>
           </div>
+
+          <Button
+            variant={showRemoteStart ? "default" : "outline"}
+            onClick={() => setShowRemoteStart(!showRemoteStart)}
+            className="whitespace-nowrap"
+          >
+            <Play className="mr-2 h-4 w-4" /> Remote Start Transaction
+          </Button>
+
+          <Button
+            variant={showRemoteStop ? "default" : "outline"}
+            onClick={() => setShowRemoteStop(!showRemoteStop)}
+            className="whitespace-nowrap"
+          >
+            <Square className="mr-2 h-4 w-4" /> Remote Stop Transaction
+          </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-          {/* Remote Start */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm">Remote Start Transaction</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">Connector ID</Label>
-                <Input value={connectorId} onChange={e => setConnectorId(e.target.value)} type="number" />
+        {(showRemoteStart || showRemoteStop) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+            {/* Remote Start */}
+            {showRemoteStart && (
+              <div className="space-y-4 border p-4 rounded-md">
+                <h4 className="font-medium text-sm">Remote Start Transaction</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Connector ID</Label>
+                    <Input value={connectorId} onChange={e => setConnectorId(e.target.value)} type="number" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">RFID Tag ID</Label>
+                    <Input value={tagId} onChange={e => setTagId(e.target.value)} placeholder="e.g. DEADBEAF" />
+                  </div>
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={() => sendCommand('remote-start', { connectorId: parseInt(connectorId), idTag: tagId })}
+                  disabled={isLoading || !tagId}
+                >
+                  <Play className="mr-2 h-4 w-4" /> Send Start Command
+                </Button>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">RFID Tag ID</Label>
-                <Input value={tagId} onChange={e => setTagId(e.target.value)} placeholder="e.g. DEADBEAF" />
-              </div>
-            </div>
-            <Button 
-              className="w-full" 
-              onClick={() => sendCommand('remote-start', { connectorId: parseInt(connectorId), idTag: tagId })}
-              disabled={isLoading || !tagId}
-            >
-              <Play className="mr-2 h-4 w-4" /> Remote Start
-            </Button>
-          </div>
+            )}
 
-          {/* Remote Stop */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm">Remote Stop Transaction</h4>
-            <div className="space-y-1">
-              <Label className="text-xs">Transaction ID</Label>
-              <Input value={transactionId} onChange={e => setTransactionId(e.target.value)} type="number" placeholder="Enter Txn ID" />
-            </div>
-            <Button 
-              variant="destructive"
-              className="w-full text-destructive bg-destructive/10 hover:bg-destructive hover:text-white border-0" 
-              onClick={() => sendCommand('remote-stop', { transactionId: parseInt(transactionId) })}
-              disabled={isLoading || !transactionId}
-            >
-              <Square className="mr-2 h-4 w-4" /> Remote Stop
-            </Button>
+            {/* Remote Stop */}
+            {showRemoteStop && (
+              <div className="space-y-4 border p-4 rounded-md">
+                <h4 className="font-medium text-sm">Remote Stop Transaction</h4>
+                <div className="space-y-1">
+                  <Label className="text-xs">Transaction ID</Label>
+                  <Input value={transactionId} onChange={e => setTransactionId(e.target.value)} type="number" placeholder="Enter Txn ID" />
+                </div>
+                <Button
+                  variant="destructive"
+                  className="w-full text-destructive bg-destructive/10 hover:bg-destructive hover:text-white border-0"
+                  onClick={() => sendCommand('remote-stop', { transactionId: parseInt(transactionId) })}
+                  disabled={isLoading || !transactionId}
+                >
+                  <Square className="mr-2 h-4 w-4" /> Send Stop Command
+                </Button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

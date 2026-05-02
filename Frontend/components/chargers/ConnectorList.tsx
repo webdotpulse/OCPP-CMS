@@ -1,8 +1,11 @@
 "use client";
+import React from "react";
 
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Zap, CheckCircle2, XCircle, Clock, AlertTriangle } from "lucide-react";
+import { Zap, CheckCircle2, XCircle, Clock, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
+import { ChannelLogs } from "./ChannelLogs";
 
 interface Connector {
   connector_id: number;
@@ -11,6 +14,7 @@ interface Connector {
   current_type: string;
   max_power: number;
   max_current?: number;
+  charger_id?: number;
 }
 
 interface ConnectorListProps {
@@ -36,6 +40,8 @@ function getStatusColor(status: string) {
 }
 
 export function ConnectorList({ connectors }: ConnectorListProps) {
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
   if (!connectors || connectors.length === 0) {
     return (
       <div className="py-8 text-center text-muted-foreground border border-dashed rounded-lg flex flex-col items-center gap-2">
@@ -49,6 +55,10 @@ export function ConnectorList({ connectors }: ConnectorListProps) {
   const availableCount = connectors.filter(c => c.status?.toLowerCase() === 'available').length;
   const chargingCount = connectors.filter(c => c.status?.toLowerCase() === 'charging').length;
   const faultedCount = connectors.filter(c => c.status?.toLowerCase() === 'faulted').length;
+
+  const toggleExpand = (id: number) => {
+    setExpandedId(prev => (prev === id ? null : id));
+  };
 
   return (
     <div className="space-y-4">
@@ -70,6 +80,7 @@ export function ConnectorList({ connectors }: ConnectorListProps) {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-10"></TableHead>
             <TableHead>Connector</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Power</TableHead>
@@ -79,24 +90,48 @@ export function ConnectorList({ connectors }: ConnectorListProps) {
         </TableHeader>
         <TableBody>
           {connectors.map((conn) => (
-            <TableRow key={conn.connector_id}>
-              <TableCell className="font-medium">
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(conn.status)}
-                  <span>{conn.connector_name || `Connector ${conn.connector_id}`}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="secondary">{conn.current_type || 'N/A'}</Badge>
-              </TableCell>
-              <TableCell>{conn.max_power ? `${conn.max_power} kW` : 'N/A'}</TableCell>
-              <TableCell>{conn.max_current ? `${conn.max_current} A` : 'N/A'}</TableCell>
-              <TableCell>
-                <Badge className={getStatusColor(conn.status)}>
-                  {conn.status}
-                </Badge>
-              </TableCell>
-            </TableRow>
+            <React.Fragment key={conn.connector_id}>
+              <TableRow
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => toggleExpand(conn.connector_id)}
+              >
+                <TableCell>
+                  {expandedId === conn.connector_id ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(conn.status)}
+                    <span>{conn.connector_name || `Connector ${conn.connector_id}`}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="secondary">{conn.current_type || 'N/A'}</Badge>
+                </TableCell>
+                <TableCell>{conn.max_power ? `${conn.max_power} kW` : 'N/A'}</TableCell>
+                <TableCell>{conn.max_current ? `${conn.max_current} A` : 'N/A'}</TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(conn.status)}>
+                    {conn.status}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+              {expandedId === conn.connector_id && (
+                <TableRow>
+                  <TableCell colSpan={6} className="p-0 border-b-0 bg-muted/10">
+                    <div className="p-4 pt-0">
+                      <ChannelLogs
+                        chargerId={conn.charger_id || 0}
+                        connectorId={conn.connector_id}
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </React.Fragment>
           ))}
         </TableBody>
       </Table>

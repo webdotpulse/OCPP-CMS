@@ -97,16 +97,23 @@ export async function getConfiguration(
 
     // Send GetConfiguration using correct OCPP 1.6 CALL format
     const messageId = generateMessageId();
+
+    // Only send the key array if it's explicitly provided and valid
+    const payload: any = {};
+    if (key && (Array.isArray(key) ? key.length > 0 : key !== "")) {
+      payload.key = Array.isArray(key) ? key : [key];
+    }
+
     const message = [
       2,  // MessageTypeId: CALL
       messageId,
       "GetConfiguration",
-      { key: key || [] }
+      payload
     ];
 
     await chargerRegistry.publishCommand(chargerId, message);
 
-    logger.info(`GetConfiguration sent to charger ${chargerId}, key: ${key || "all"}`);
+    logger.info(`GetConfiguration sent to charger ${chargerId}, payload: ${JSON.stringify(payload)}`);
 
     return { status: "Accepted" };
   } catch (error) {
