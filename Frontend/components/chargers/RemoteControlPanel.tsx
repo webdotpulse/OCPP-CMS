@@ -68,83 +68,87 @@ export function RemoteControlPanel({ chargerId }: RemoteControlPanelProps) {
         <CardDescription>Issue commands directly to the charge point.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => sendCommand('reset', { type: 'Soft' })}
-            disabled={isLoading}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" /> Soft Reset
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => sendCommand('reset', { type: 'Hard' })}
-            disabled={isLoading}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" /> Hard Reset
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => sendCommand('unlock', { connectorId: parseInt(connectorId) })}
-            disabled={isLoading}
-          >
-            <Unlock className="mr-2 h-4 w-4" /> Unlock Connector
-          </Button>
-          <div className="flex items-center gap-2">
-            <Select value={triggerMessageTarget} onValueChange={setTriggerMessageTarget}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select Message" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="BootNotification">BootNotification</SelectItem>
-                <SelectItem value="DiagnosticsStatusNotification">DiagnosticsStatusNotification</SelectItem>
-                <SelectItem value="FirmwareStatusNotification">FirmwareStatusNotification</SelectItem>
-                <SelectItem value="Heartbeat">Heartbeat</SelectItem>
-                <SelectItem value="MeterValues">MeterValues</SelectItem>
-                <SelectItem value="StatusNotification">StatusNotification</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
-              onClick={() => sendCommand('trigger-message', { requestedMessage: triggerMessageTarget })}
-              disabled={isLoading || !triggerMessageTarget}
+              onClick={() => sendCommand('reset', { type: 'Soft' })}
+              disabled={isLoading}
             >
-              <Send className="mr-2 h-4 w-4" /> Trigger Message
+              <RefreshCw className="mr-2 h-4 w-4" /> Soft Reset
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => sendCommand('reset', { type: 'Hard' })}
+              disabled={isLoading}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Hard Reset
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => sendCommand('unlock', { connectorId: parseInt(connectorId) })}
+              disabled={isLoading}
+            >
+              <Unlock className="mr-2 h-4 w-4" /> Unlock Connector
+            </Button>
+            <div className="flex items-center gap-2">
+              <Select value={triggerMessageTarget} onValueChange={setTriggerMessageTarget}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select Message" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BootNotification">BootNotification</SelectItem>
+                  <SelectItem value="DiagnosticsStatusNotification">DiagnosticsStatusNotification</SelectItem>
+                  <SelectItem value="FirmwareStatusNotification">FirmwareStatusNotification</SelectItem>
+                  <SelectItem value="Heartbeat">Heartbeat</SelectItem>
+                  <SelectItem value="MeterValues">MeterValues</SelectItem>
+                  <SelectItem value="StatusNotification">StatusNotification</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                onClick={() => sendCommand('trigger-message', { requestedMessage: triggerMessageTarget })}
+                disabled={isLoading || !triggerMessageTarget}
+              >
+                <Send className="mr-2 h-4 w-4" /> Trigger Message
+              </Button>
+            </div>
           </div>
 
-          <Button
-            variant={showRemoteStart ? "default" : "outline"}
-            onClick={() => setShowRemoteStart(!showRemoteStart)}
-            className="whitespace-nowrap"
-          >
-            <Play className="mr-2 h-4 w-4" /> Remote Start Transaction
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={showRemoteStart ? "default" : "outline"}
+              onClick={() => setShowRemoteStart(!showRemoteStart)}
+              className="whitespace-nowrap"
+            >
+              <Play className="mr-2 h-4 w-4" /> Remote Start Transaction
+            </Button>
 
-          <Button
-            variant={showRemoteStop ? "default" : "outline"}
-            onClick={() => setShowRemoteStop(!showRemoteStop)}
-            className="whitespace-nowrap"
-          >
-            <Square className="mr-2 h-4 w-4" /> Remote Stop Transaction
-          </Button>
+            <Button
+              variant={showRemoteStop ? "default" : "outline"}
+              onClick={() => setShowRemoteStop(!showRemoteStop)}
+              className="whitespace-nowrap"
+            >
+              <Square className="mr-2 h-4 w-4" /> Remote Stop Transaction
+            </Button>
 
-          <Button
-            variant={showTestAuth ? "default" : "outline"}
-            onClick={() => setShowTestAuth(!showTestAuth)}
-            className="whitespace-nowrap"
-          >
-            <Unlock className="mr-2 h-4 w-4" /> Test RFID Card
-          </Button>
+            <Button
+              variant={showTestAuth ? "default" : "outline"}
+              onClick={() => setShowTestAuth(!showTestAuth)}
+              className="whitespace-nowrap"
+            >
+              <Unlock className="mr-2 h-4 w-4" /> Test RFID Card
+            </Button>
 
-          <Button
-            variant={showFirmwareUpdate ? "default" : "outline"}
-            onClick={() => setShowFirmwareUpdate(!showFirmwareUpdate)}
-            className="whitespace-nowrap"
-          >
-            <Zap className="mr-2 h-4 w-4" /> Update Firmware
-          </Button>
+            <Button
+              variant={showFirmwareUpdate ? "default" : "outline"}
+              onClick={() => setShowFirmwareUpdate(!showFirmwareUpdate)}
+              className="whitespace-nowrap"
+            >
+              <Zap className="mr-2 h-4 w-4" /> Update Firmware
+            </Button>
+          </div>
         </div>
 
         {(showRemoteStart || showRemoteStop || showTestAuth || showFirmwareUpdate) && (

@@ -68,7 +68,8 @@ export default function ChargersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Identity</TableHead>
-              <TableHead>Station</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Charge group</TableHead>
               <TableHead>Model</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Last Heartbeat</TableHead>
@@ -78,11 +79,11 @@ export default function ChargersPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">Loading chargers...</TableCell>
+                <TableCell colSpan={7} className="h-24 text-center">Loading chargers...</TableCell>
               </TableRow>
             ) : chargers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No chargers found.</TableCell>
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">No chargers found.</TableCell>
               </TableRow>
             ) : (
               chargers.map((charger) => (
@@ -94,6 +95,7 @@ export default function ChargersPage() {
                     </Link>
                   </TableCell>
                   <TableCell>{charger.chargingStation?.station_name || 'Unassigned'}</TableCell>
+                  <TableCell>{charger.chargeGroup?.name || 'None'}</TableCell>
                   <TableCell>{charger.manufacturer} {charger.model}</TableCell>
                   <TableCell>{getStatusBadge(charger.status)}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">

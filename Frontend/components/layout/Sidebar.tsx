@@ -33,8 +33,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean,
   const { user } = useAuth();
 
   return (
-    <aside className={cn("border-r flex flex-col h-screen fixed left-0 top-0 transition-all duration-300 bg-[#009C9F] text-white", isCollapsed ? "w-16" : "w-64")}>
-      <div className={cn("h-16 flex items-center border-b border-white/20", isCollapsed ? "justify-center px-0" : "justify-between px-6")}>
+    <aside className={cn("border-r flex flex-col h-screen fixed left-0 top-0 transition-all duration-300 bg-[#009C9F] dark:bg-slate-900 text-white", isCollapsed ? "w-16" : "w-64")}>
+      <div className={cn("h-16 flex items-center border-b border-white/20 dark:border-white/10", isCollapsed ? "justify-center px-0" : "justify-between px-6")}>
         {!isCollapsed && (
           <h1 className="font-bold text-lg tracking-tight flex items-center gap-2">
             <Image src="/assets/images/favicon/favicon.svg" alt="MobilityPulse Logo" width={24} height={24} className="h-6 w-6 filter brightness-0 invert" />
