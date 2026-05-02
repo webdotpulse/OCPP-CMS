@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { logger } from "../../utils/logger.js";
+import { prisma } from "../../config/database.js";
 import {
   remoteStartTransaction,
   remoteStopTransaction,
@@ -184,12 +185,64 @@ export const getChargerConfiguration = async (req: Request, res: Response) => {
 
     const result = await getConfiguration(chargerId, key);
 
+    if (result.configurationKey) {
+      for (const config of result.configurationKey) {
+        await prisma.chargerConfiguration.upsert({
+          where: {
+            chargerId_key: {
+              chargerId: Number(chargerId),
+              key: config.key,
+            },
+          },
+          update: {
+            value: config.value || "",
+            readonly: config.readonly || false,
+          },
+          create: {
+            chargerId: Number(chargerId),
+            key: config.key,
+            value: config.value || "",
+            readonly: config.readonly || false,
+          },
+        });
+      }
+    }
+
     res.json({ success: true, ...result });
   } catch (error) {
     logger.error(`Error getting configuration: ${error}`);
     res.status(500).json({
       success: false,
       error: "Failed to get configuration",
+    });
+  }
+};
+
+/**
+ * DELETE /api/ocpp/configuration/:chargerId - Delete all saved configurations for a charger
+ */
+export const deleteChargerConfigurations = async (req: Request, res: Response) => {
+  try {
+    const chargerIdStr = Array.isArray(req.params.chargerId) ? req.params.chargerId[0] : req.params.chargerId;
+    const chargerId = parseInt(chargerIdStr, 10);
+
+    if (isNaN(chargerId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid chargerId",
+      });
+    }
+
+    await prisma.chargerConfiguration.deleteMany({
+      where: { chargerId },
+    });
+
+    res.json({ success: true, message: "Configurations deleted successfully" });
+  } catch (error) {
+    logger.error(`Error deleting configurations: ${error}`);
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete configurations",
     });
   }
 };
@@ -279,6 +332,46 @@ export const unlockConnectorController = async (req: Request, res: Response) => 
     res.status(500).json({
       success: false,
       error: "Failed to unlock connector",
+    });
+  }
+};
+
+/**
+ * POST /api/ocpp/test-auth - Test if an RFID tag is valid
+ */
+export const testAuth = async (req: Request, res: Response) => {
+  try {
+    const { idTag } = req.body;
+
+    if (!idTag) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required field: idTag",
+      });
+    }
+
+    const rfidUser = await prisma.rfidUser.findUnique({
+      where: { rfid_tag: idTag },
+    });
+
+    if (!rfidUser || !rfidUser.active) {
+      return res.json({
+        success: true,
+        valid: false,
+        message: "Tag is invalid or inactive"
+      });
+    }
+
+    return res.json({
+      success: true,
+      valid: true,
+      message: `Tag is valid and belongs to ${rfidUser.name}`
+    });
+  } catch (error) {
+    logger.error(`Error testing auth: ${error}`);
+    res.status(500).json({
+      success: false,
+      error: "Failed to test auth",
     });
   }
 };

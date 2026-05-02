@@ -10,6 +10,67 @@ import type { CreateChargerDto, UpdateChargerDto } from "../../types/index.js";
 /**
  * GET /api/chargers - Get all chargers
  */
+/**
+ * GET /api/chargers/:id/logs - Get charger logs
+ */
+export const getChargerLogs = async (req: Request, res: Response) => {
+  try {
+    const chargerId = parseId(req.params.id);
+
+    if (!chargerId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid charger ID",
+      });
+    }
+
+    const { limit = 50 } = req.query;
+
+    const logs = await prisma.ocppLog.findMany({
+      where: { chargerId },
+      orderBy: { timestamp: "desc" },
+      take: Number(limit),
+    });
+
+    res.json({ success: true, data: logs });
+  } catch (error) {
+    logger.error(`Error getting charger logs: ${error}`);
+    res.status(500).json({
+      success: false,
+      error: "Failed to get charger logs",
+    });
+  }
+};
+
+/**
+ * GET /api/chargers/:id/configurations - Get saved charger configurations
+ */
+export const getChargerConfigurations = async (req: Request, res: Response) => {
+  try {
+    const chargerId = parseId(req.params.id);
+
+    if (!chargerId) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid charger ID",
+      });
+    }
+
+    const configs = await prisma.chargerConfiguration.findMany({
+      where: { chargerId },
+      orderBy: { key: "asc" },
+    });
+
+    res.json({ success: true, data: configs });
+  } catch (error) {
+    logger.error(`Error getting charger configurations: ${error}`);
+    res.status(500).json({
+      success: false,
+      error: "Failed to get charger configurations",
+    });
+  }
+};
+
 export const getAllChargers = async (req: Request, res: Response) => {
   try {
     const { page: queryPage, limit: queryLimit } = req.query;

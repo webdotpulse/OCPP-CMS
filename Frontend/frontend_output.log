@@ -1,0 +1,30 @@
+
+> Frontend@0.0.1 dev
+> next dev -p 3002 --turbopack
+
+   ▲ Next.js 15.5.15 (Turbopack)
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.0.2:3002
+
+ ✓ Starting...
+ ✓ Compiled middleware in 359ms
+ ✓ Ready in 1938ms
+ ○ Compiling / ...
+ ✓ Compiled / in 6.8s
+ GET / 307 in 7947ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 6.3s
+ GET /dashboard 200 in 6837ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 2.8s
+ GET /login 200 in 2979ms
+ GET /login 200 in 357ms
+ GET /dashboard 200 in 249ms
+ ○ Compiling /chargers ...
+ ✓ Compiled /chargers in 1017ms
+ GET /chargers 200 in 1342ms
+ GET /login 200 in 199ms
+ GET /dashboard 200 in 122ms
+ ○ Compiling /charge-groups ...
+ ✓ Compiled /charge-groups in 832ms
+ GET /charge-groups 200 in 1035ms

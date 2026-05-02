@@ -80,6 +80,7 @@ model Charger {
   rfidSessions        RfidSession[]
   tariffs             Tariff[]
   chargeGroupChargers ChargeGroupCharger[]
+  configurations      ChargerConfiguration[]
 }
 
 // Charge connector (multiple per charger)
@@ -215,6 +216,17 @@ model ChargeGroup {
 
   chargers ChargeGroupCharger[]
   users    ChargeGroupUser[]
+}
+
+model ChargerConfiguration {
+  id        Int     @id @default(autoincrement())
+  chargerId Int
+  key       String
+  value     String
+  readonly  Boolean @default(false)
+  charger   Charger @relation(fields: [chargerId], references: [charger_id], onDelete: Cascade)
+
+  @@unique([chargerId, key])
 }
 
 model ChargeGroupCharger {

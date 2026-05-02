@@ -12,7 +12,8 @@ import {
   TerminalSquare,
   WalletCards,
   Zap,
-  Users
+  Users,
+  Menu,
 } from 'lucide-react';
 
 const routes = [
@@ -27,17 +28,22 @@ const routes = [
   { name: 'Settings', path: '/settings', icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsCollapsed: (val: boolean) => void }) {
   const pathname = usePathname();
   const { user } = useAuth();
 
   return (
-    <aside className="w-64 border-r bg-card flex flex-col h-screen fixed left-0 top-0">
-      <div className="h-16 flex items-center px-6 border-b">
-        <h1 className="font-bold text-lg tracking-tight flex items-center gap-2">
-          <Image src="/assets/images/favicon/favicon.svg" alt="MobilityPulse Logo" width={24} height={24} className="h-6 w-6" />
-          <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent font-bold">MobilityPulse</span>
-        </h1>
+    <aside className={cn("border-r flex flex-col h-screen fixed left-0 top-0 transition-all duration-300 bg-[#009C9F] text-white", isCollapsed ? "w-16" : "w-64")}>
+      <div className={cn("h-16 flex items-center border-b border-white/20", isCollapsed ? "justify-center px-0" : "justify-between px-6")}>
+        {!isCollapsed && (
+          <h1 className="font-bold text-lg tracking-tight flex items-center gap-2">
+            <Image src="/assets/images/favicon/favicon.svg" alt="MobilityPulse Logo" width={24} height={24} className="h-6 w-6 filter brightness-0 invert" />
+            <span className="font-bold">MobilityPulse</span>
+          </h1>
+        )}
+        <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-1 hover:bg-white/10 rounded">
+          <Menu className="h-5 w-5" />
+        </button>
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {routes.map((route) => {
@@ -48,14 +54,16 @@ export function Sidebar() {
               key={route.path}
               href={route.path}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                "flex items-center gap-3 py-2 rounded-md text-sm transition-colors",
+                isCollapsed ? "justify-center px-0" : "px-3",
                 isActive 
-                  ? "bg-primary/10 text-primary font-medium" 
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  ? "bg-white/20 font-medium"
+                  : "text-white/80 hover:bg-white/10 hover:text-white"
               )}
+              title={isCollapsed ? route.name : undefined}
             >
-              <Icon className="h-4 w-4" />
-              {route.name}
+              <Icon className="h-5 w-5" />
+              {!isCollapsed && route.name}
             </Link>
           );
         })}
@@ -63,20 +71,24 @@ export function Sidebar() {
           <Link
             href="/users"
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+              "flex items-center gap-3 py-2 rounded-md text-sm transition-colors",
+              isCollapsed ? "justify-center px-0" : "px-3",
               pathname.startsWith('/users')
-                ? "bg-primary/10 text-primary font-medium"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                ? "bg-white/20 font-medium"
+                : "text-white/80 hover:bg-white/10 hover:text-white"
             )}
+            title={isCollapsed ? "Customers" : undefined}
           >
-            <Users className="h-4 w-4" />
-            Customers
+            <Users className="h-5 w-5" />
+            {!isCollapsed && "Customers"}
           </Link>
         )}
       </nav>
-      <div className="p-4 border-t text-xs text-muted-foreground text-center">
-        MobilityPulse CPMS v1.0
-      </div>
+      {!isCollapsed && (
+        <div className="p-4 border-t border-white/20 text-xs text-white/60 text-center">
+          MobilityPulse CPMS v1.0
+        </div>
+      )}
     </aside>
   );
 }

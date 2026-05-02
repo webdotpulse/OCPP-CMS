@@ -19,7 +19,7 @@ export default function ChargeGroupsPage() {
   const fetchGroups = async () => {
     try {
       const response = await api.get('/charge-groups');
-      setGroups(response.data.data);
+      setGroups(response.data.data || response.data);
     } catch (error) {
       console.error("Failed to fetch charge groups", error);
     } finally {
