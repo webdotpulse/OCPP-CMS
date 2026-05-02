@@ -22,6 +22,7 @@ import dashboardRoutes from "./api/dashboard/dashboard.routes.js";
 import paymentsRoutes from "./api/payments/payments.routes.js";
 import ocpiRoutes from "./api/ocpi/ocpi.routes.js";
 import usersRoutes from "./api/users/users.routes.js";
+import chargeGroupsRoutes from "./api/chargeGroups/chargeGroups.routes.js";
 
 // Import OCPP servers
 import { ocppServer } from "./ocpp/ocppServer.js";
@@ -81,6 +82,7 @@ export function createApp(): Application {
   app.use("/api/ocpp", authenticateToken, ocppRoutes);
   app.use("/api/dashboard", authenticateToken, dashboardRoutes);
   app.use("/api/users", authenticateToken, usersRoutes);
+  app.use("/api/charge-groups", authenticateToken, chargeGroupsRoutes);
   app.use("/api/payments", paymentsRoutes); // Removed auth for webhook/initial testing
   app.use("/api/ocpi", ocpiRoutes); // Removed auth for initial testing
 

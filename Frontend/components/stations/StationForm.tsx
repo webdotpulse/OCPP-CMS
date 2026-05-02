@@ -11,10 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 const stationSchema = z.object({
   station_name: z.string().min(2, "Station name is required"),
@@ -51,11 +52,48 @@ export function StationForm({ initialData }: StationFormProps) {
     },
   });
 
+  const [isGeocoding, setIsGeocoding] = useState(false);
+
   useEffect(() => {
     if (user?.role === 'admin') {
       api.get('/users').then(res => setUsersList(res.data)).catch(err => logger.error(err));
     }
   }, [user]);
+
+  const handleGeocode = async () => {
+    const street = watch('street_name');
+    const city = watch('city');
+    const state = watch('state');
+    const postalCode = watch('postal_code');
+    const country = watch('country');
+
+    const addressParts = [street, city, state, postalCode, country].filter(Boolean);
+    const addressString = addressParts.join(', ');
+
+    if (!addressString) {
+      toast.error('Please enter an address first');
+      return;
+    }
+
+    setIsGeocoding(true);
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressString)}`);
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        setValue('latitude', parseFloat(data[0].lat), { shouldValidate: true });
+        setValue('longitude', parseFloat(data[0].lon), { shouldValidate: true });
+        toast.success('Coordinates found and applied');
+      } else {
+        toast.error('Coordinates not found for this address');
+      }
+    } catch (error) {
+      logger.error('Geocoding failed', error);
+      toast.error('Geocoding service unavailable');
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
 
   const onSubmit = async (data: StationFormValues) => {
     setIsLoading(true);
@@ -124,16 +162,25 @@ export function StationForm({ initialData }: StationFormProps) {
             {errors.country && <p className="text-sm text-destructive">{errors.country.message}</p>}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
-            <div className="space-y-2">
-              <Label htmlFor="latitude">Latitude</Label>
-               <Input id="latitude" type="number" step="any" {...register('latitude', { valueAsNumber: true })} />
-              {errors.latitude && <p className="text-sm text-destructive">{errors.latitude.message}</p>}
+          <div className="flex flex-col gap-4 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <Label>Coordinates</Label>
+              <Button type="button" variant="secondary" size="sm" onClick={handleGeocode} disabled={isGeocoding}>
+                {isGeocoding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />}
+                Auto-calculate from Address
+              </Button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="longitude">Longitude</Label>
-               <Input id="longitude" type="number" step="any" {...register('longitude', { valueAsNumber: true })} />
-              {errors.longitude && <p className="text-sm text-destructive">{errors.longitude.message}</p>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="latitude" className="text-xs text-muted-foreground">Latitude</Label>
+                 <Input id="latitude" type="number" step="any" {...register('latitude', { valueAsNumber: true })} />
+                {errors.latitude && <p className="text-sm text-destructive">{errors.latitude.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="longitude" className="text-xs text-muted-foreground">Longitude</Label>
+                 <Input id="longitude" type="number" step="any" {...register('longitude', { valueAsNumber: true })} />
+                {errors.longitude && <p className="text-sm text-destructive">{errors.longitude.message}</p>}
+              </div>
             </div>
           </div>
 

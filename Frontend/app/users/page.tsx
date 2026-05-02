@@ -1,12 +1,17 @@
 "use client";
-import { logger } from "@/lib/logger";
 
 import { useEffect, useState } from "react";
-import { AppShell } from "@/components/layout/AppShell";
+import Link from "next/link";
 import { api } from "@/lib/api";
+import { AppShell } from "@/components/layout/AppShell";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus, Trash2, Building, User as UserIcon, Briefcase } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function UsersPage() {
@@ -14,29 +19,46 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     try {
       const response = await api.get('/users');
-      setUsers(response.data);
+      setUsers(response.data.data || response.data);
     } catch (error) {
-      logger.error("Failed to fetch users", error);
+      console.error("Failed to fetch users", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   const updateRole = async (userId: number, newRole: string) => {
     try {
       await api.put(`/users/${userId}/role`, { role: newRole });
       setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
-    } catch (error) {
-      logger.error("Failed to update user role", error);
-      alert("Failed to update user role.");
+      toast.success("Role updated");
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to update user role.");
     }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+    try {
+      await api.delete(`/users/${id}`);
+      toast.success("User deleted");
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to delete user");
+    }
+  };
+
+  const getUserTypeIcon = (type: string) => {
+    if (type === 'company') return <Building className="h-4 w-4 text-blue-500" />;
+    if (type === 'employee') return <Briefcase className="h-4 w-4 text-green-500" />;
+    return <UserIcon className="h-4 w-4 text-orange-500" />;
   };
 
   if (user?.role !== 'admin') {
@@ -51,63 +73,86 @@ export default function UsersPage() {
 
   return (
     <AppShell>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-          <p className="text-muted-foreground">Manage system users and their roles.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Customers / Users</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage system access, companies, employees, and private users.
+          </p>
         </div>
+        <Link href="/users/create">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" /> Add User
+          </Button>
+        </Link>
       </div>
 
-      <div className="rounded-md border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+      <Card>
+        <CardHeader>
+          <CardTitle>All Users</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">Loading users...</TableCell>
+                <TableHead>Email</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Company</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ) : users.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">No users found.</TableCell>
-              </TableRow>
-            ) : (
-              users.map((u) => (
+            </TableHeader>
+            <TableBody>
+              {Array.isArray(users) && users.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">{u.email}</TableCell>
-                  <TableCell>{new Date(u.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Badge variant={u.role === 'admin' ? "default" : "secondary"}>
-                      {u.role}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      {getUserTypeIcon(u.userType)}
+                      <span className="capitalize">{u.userType || 'Private'}</span>
+                    </div>
                   </TableCell>
+                  <TableCell className="text-muted-foreground">{u.companyName || '—'}</TableCell>
+                  <TableCell>{u.createdAt ? format(new Date(u.createdAt), 'MMM d, yyyy') : '—'}</TableCell>
                   <TableCell>
-                    <Select
-                      value={u.role}
-                      onValueChange={(val) => updateRole(u.id, val)}
-                      disabled={u.id === user.id} // prevent changing own role easily
-                    >
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={u.role === 'admin' ? "default" : "secondary"}>
+                        {u.role}
+                      </Badge>
+                      <Select
+                        value={u.role}
+                        onValueChange={(val) => updateRole(u.id, val)}
+                        disabled={u.id === user.id} // prevent changing own role easily
+                      >
+                        <SelectTrigger className="w-[120px] h-8">
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(u.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+              {!isLoading && users.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                    No users found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </AppShell>
   );
 }
