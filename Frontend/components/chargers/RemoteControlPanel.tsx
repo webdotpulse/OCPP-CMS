@@ -23,6 +23,25 @@ export function RemoteControlPanel({ chargerId }: RemoteControlPanelProps) {
   const [triggerMessageTarget, setTriggerMessageTarget] = useState("StatusNotification");
   const [showRemoteStart, setShowRemoteStart] = useState(false);
   const [showRemoteStop, setShowRemoteStop] = useState(false);
+  const [showTestAuth, setShowTestAuth] = useState(false);
+  const [testTagId, setTestTagId] = useState("");
+
+  const testAuthTag = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.post(`/ocpp/test-auth`, { idTag: testTagId });
+      if (response.data.valid) {
+        toast.success(response.data.message);
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error: any) {
+      logger.error('Failed to test auth', error);
+      toast.error(error.response?.data?.error || 'Failed to test auth');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const sendCommand = async (endpoint: string, payload: any = {}) => {
     setIsLoading(true);
@@ -108,9 +127,17 @@ export function RemoteControlPanel({ chargerId }: RemoteControlPanelProps) {
           >
             <Square className="mr-2 h-4 w-4" /> Remote Stop Transaction
           </Button>
+
+          <Button
+            variant={showTestAuth ? "default" : "outline"}
+            onClick={() => setShowTestAuth(!showTestAuth)}
+            className="whitespace-nowrap"
+          >
+            <Unlock className="mr-2 h-4 w-4" /> Test RFID Card
+          </Button>
         </div>
 
-        {(showRemoteStart || showRemoteStop) && (
+        {(showRemoteStart || showRemoteStop || showTestAuth) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
             {/* Remote Start */}
             {showRemoteStart && (
@@ -151,6 +178,25 @@ export function RemoteControlPanel({ chargerId }: RemoteControlPanelProps) {
                   disabled={isLoading || !transactionId}
                 >
                   <Square className="mr-2 h-4 w-4" /> Send Stop Command
+                </Button>
+              </div>
+            )}
+
+            {/* Test Auth */}
+            {showTestAuth && (
+              <div className="space-y-4 border p-4 rounded-md">
+                <h4 className="font-medium text-sm">Test RFID Card</h4>
+                <div className="space-y-1">
+                  <Label className="text-xs">RFID Tag ID</Label>
+                  <Input value={testTagId} onChange={e => setTestTagId(e.target.value)} placeholder="e.g. DEADBEAF" />
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full border-primary text-primary hover:bg-primary/10"
+                  onClick={testAuthTag}
+                  disabled={isLoading || !testTagId}
+                >
+                  <Unlock className="mr-2 h-4 w-4" /> Test Card
                 </Button>
               </div>
             )}

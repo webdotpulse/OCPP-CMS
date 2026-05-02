@@ -11,6 +11,7 @@ import { Loader2, Download, Upload } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect } from "react";
 
 interface ConfigParam {
   key: string;
@@ -28,6 +29,21 @@ export function ChargerConfigurationPanel({ chargerId }: ChargerConfigurationPan
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const loadSavedConfigurations = async () => {
+      try {
+        const response = await api.get(`/chargers/${chargerId}/configurations`);
+        if (response.data) {
+          setConfigs(response.data);
+        }
+      } catch (error) {
+        logger.error('Failed to load saved configurations', error);
+      }
+    };
+
+    loadSavedConfigurations();
+  }, [chargerId]);
 
   const fetchConfiguration = async () => {
     setIsLoading(true);
@@ -97,6 +113,20 @@ export function ChargerConfigurationPanel({ chargerId }: ChargerConfigurationPan
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (!confirm("Are you sure you want to delete all saved configurations?")) return;
+    try {
+      await api.delete(`/ocpp/configuration/${chargerId}`);
+      toast.success("Configurations deleted successfully");
+      setConfigs([]);
+      setEditedValues({});
+      setSelectedKeys(new Set());
+    } catch (error) {
+      logger.error('Failed to delete configurations', error);
+      toast.error("Failed to delete configurations");
+    }
+  };
+
   return (
     <Card className="shadow-sm">
       <CardHeader className="border-b pb-4 flex flex-row items-center justify-between">
@@ -104,10 +134,17 @@ export function ChargerConfigurationPanel({ chargerId }: ChargerConfigurationPan
           <CardTitle className="text-xl">Configuration Parameters</CardTitle>
           <CardDescription>View and modify specific charger parameters.</CardDescription>
         </div>
-        <Button onClick={fetchConfiguration} disabled={isLoading} variant="outline" size="sm">
-          {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-          Get Parameters
-        </Button>
+        <div className="flex gap-2">
+          {configs.length > 0 && (
+            <Button onClick={handleDeleteAll} variant="destructive" size="sm" className="bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border-0">
+              Delete All
+            </Button>
+          )}
+          <Button onClick={fetchConfiguration} disabled={isLoading} variant="outline" size="sm">
+            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            Get Parameters
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="pt-6">
         {configs.length === 0 ? (

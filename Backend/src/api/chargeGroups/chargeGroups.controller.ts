@@ -70,6 +70,14 @@ export const createChargeGroup = async (req: Request, res: Response) => {
 
     if (!name) return res.status(400).json({ success: false, error: "Name is required" });
 
+    if (chargerIds && !Array.isArray(chargerIds)) {
+      return res.status(400).json({ success: false, error: "chargerIds must be an array" });
+    }
+
+    if (users && !Array.isArray(users)) {
+      return res.status(400).json({ success: false, error: "users must be an array" });
+    }
+
     const group = await prisma.chargeGroup.create({
       data: {
         name,
@@ -104,8 +112,16 @@ export const updateChargeGroup = async (req: Request, res: Response) => {
 
     const { name, description, chargerIds, users } = req.body;
 
+    if (chargerIds && !Array.isArray(chargerIds)) {
+      return res.status(400).json({ success: false, error: "chargerIds must be an array" });
+    }
+
+    if (users && !Array.isArray(users)) {
+      return res.status(400).json({ success: false, error: "users must be an array" });
+    }
+
     // We do a transaction to clear existing relations and recreate them
-    const group = await prisma.$transaction(async (tx) => {
+    const group = await prisma.$transaction(async (tx: any) => {
       if (chargerIds) {
         await tx.chargeGroupCharger.deleteMany({ where: { chargeGroupId: id } });
       }

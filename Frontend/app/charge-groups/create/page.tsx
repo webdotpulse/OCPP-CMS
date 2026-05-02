@@ -34,8 +34,8 @@ export default function CreateChargeGroupPage() {
       api.get('/tariffs')
     ]).then(([chargersRes, usersRes, tariffsRes]) => {
       setAllChargers(chargersRes.data.data || chargersRes.data);
-      setAllUsers(usersRes.data);
-      setAllTariffs(tariffsRes.data);
+      setAllUsers(usersRes.data?.data || usersRes.data);
+      setAllTariffs(tariffsRes.data?.data || tariffsRes.data);
     }).catch(err => {
       console.error(err);
       toast.error("Failed to load dependency data");

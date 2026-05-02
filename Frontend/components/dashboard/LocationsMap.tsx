@@ -53,8 +53,8 @@ export function LocationsMap() {
     const fetchStations = async () => {
       try {
         const response = await api.get('/stations');
-        if (response.data?.data) {
-          setStations(response.data.data.filter((s: any) => s.latitude && s.longitude));
+        if (response.data) {
+          setStations(response.data.filter((s: any) => typeof s.latitude === 'number' && typeof s.longitude === 'number'));
         }
       } catch (error) {
         logger.error('Failed to fetch stations for map', error);

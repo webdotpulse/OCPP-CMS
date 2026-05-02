@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { api } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface ChannelLog {
@@ -26,45 +27,47 @@ export function ChannelLogs({ chargerId, connectorId }: ChannelLogsProps) {
   const [logs, setLogs] = useState<ChannelLog[]>([]);
 
   useEffect(() => {
-    // In a real implementation, this would connect to the WebSocket and filter by connectorId
-    // For now, we subscribe to the existing window.location.host/api/ocpp-logs if available,
-    // or simulate incoming logs based on the screenshot format.
+    const parseLogPayload = (data: any): ChannelLog | null => {
+      try {
+        const message = typeof data.message === 'string' ? JSON.parse(data.message) : data.message;
+        const payload = message[3] || {};
 
-    // Simulate initial data
-    setLogs([
-      {
-        id: "1",
-        timestamp: new Date().toISOString(),
-        notification: "Ready",
-        power: "",
-        energy: "",
-        transactionTime: "",
-        card: "",
-        client: ""
-      },
-      {
-        id: "2",
-        timestamp: new Date(Date.now() - 5000).toISOString(),
-        notification: "Commit transaction",
-        power: "",
-        energy: "27.12",
-        transactionTime: "20:44",
-        card: "BE-LMS-177702-0",
-        client: "Urban Crop Solutions"
-      },
-      {
-        id: "3",
-        timestamp: new Date(Date.now() - 10000).toISOString(),
-        notification: "Charging (full)",
-        power: "0.00",
-        energy: "27.12",
-        transactionTime: "20:44",
-        card: "BE-LMS-177702-0",
-        client: "Urban Crop Solutions"
+        if (payload.connectorId && payload.connectorId !== connectorId) {
+          return null;
+        }
+
+        const action = message[2];
+
+        return {
+          id: data.id.toString(),
+          timestamp: data.timestamp,
+          notification: typeof action === 'string' ? action : "Response",
+          power: payload.meterValue?.[0]?.sampledValue?.find((v:any) => v.measurand === 'Power.Active.Import')?.value || "",
+          energy: payload.meterValue?.[0]?.sampledValue?.find((v:any) => v.measurand === 'Energy.Active.Import.Register')?.value || payload.meterStop || payload.meterStart || "",
+          transactionTime: "",
+          card: payload.idTag || "",
+          client: ""
+        };
+      } catch {
+        return null;
       }
-    ]);
+    };
 
-    // Set up WebSocket connection for real logs
+    const fetchHistoricalLogs = async () => {
+      try {
+        const response = await api.get(`/chargers/${chargerId}/logs`);
+        const historicalLogs = (response.data || [])
+          .map(parseLogPayload)
+          .filter(Boolean) as ChannelLog[];
+        setLogs(historicalLogs.slice(0, 50));
+      } catch (error) {
+        console.error("Failed to fetch historical logs", error);
+      }
+    };
+
+    fetchHistoricalLogs();
+
+    // Set up WebSocket connection for live logs
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${wsProtocol}//${window.location.host}/api/ocpp-logs`;
     let ws: WebSocket | null = null;
@@ -77,28 +80,10 @@ export function ChannelLogs({ chargerId, connectorId }: ChannelLogsProps) {
           const data = JSON.parse(event.data);
 
           if (data.type === 'log' && data.log.chargerId === chargerId) {
-             const message = typeof data.log.message === 'string' ? JSON.parse(data.log.message) : data.log.message;
-
-             // Very basic filtering - check if the payload has our connectorId
-             const payload = message[3] || {};
-             if (payload.connectorId && payload.connectorId !== connectorId) {
-               return; // Skip logs for other connectors
+             const newLog = parseLogPayload(data.log);
+             if (newLog) {
+               setLogs(prev => [newLog, ...prev].slice(0, 50));
              }
-
-             const action = message[2];
-
-             const newLog: ChannelLog = {
-               id: data.log.id.toString(),
-               timestamp: data.log.timestamp,
-               notification: action || "Unknown",
-               power: payload.meterValue?.[0]?.sampledValue?.find((v:any) => v.measurand === 'Power.Active.Import')?.value || "",
-               energy: payload.meterValue?.[0]?.sampledValue?.find((v:any) => v.measurand === 'Energy.Active.Import.Register')?.value || payload.meterStop || payload.meterStart || "",
-               transactionTime: "",
-               card: payload.idTag || "",
-               client: ""
-             };
-
-             setLogs(prev => [newLog, ...prev].slice(0, 50)); // Keep last 50
           }
         } catch {
           // parse error

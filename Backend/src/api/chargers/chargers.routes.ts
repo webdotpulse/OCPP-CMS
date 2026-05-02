@@ -7,6 +7,8 @@ import {
   updateCharger,
   deleteCharger,
   createBulkConnectors,
+  getChargerLogs,
+  getChargerConfigurations,
 } from "./chargers.controller.js";
 
 const router = Router();
@@ -14,6 +16,8 @@ const router = Router();
 router.get("/", getAllChargers);
 router.get("/:id", getChargerById);
 router.get("/:id/status", getChargerStatus);
+router.get("/:id/logs", getChargerLogs);
+router.get("/:id/configurations", getChargerConfigurations);
 router.post("/", createCharger);
 router.put("/:id", updateCharger);
 router.delete("/:id", deleteCharger);
