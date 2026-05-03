@@ -63,6 +63,89 @@ export const register = async (req: Request, res: Response) => {
 /**
  * POST /api/auth/login - Login user
  */
+export const updateMe = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    const { name, email, userType, companyName, address, phone, taxNumber } = req.body;
+
+    // Check if email is being changed and if it's already in use
+    if (email) {
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({ success: false, error: "Email already in use" });
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name,
+        email,
+        userType,
+        companyName,
+        address,
+        phone,
+        taxNumber
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        userType: true,
+        companyName: true,
+        address: true,
+        phone: true,
+        taxNumber: true,
+      }
+    });
+
+    res.json({ success: true, data: updatedUser });
+  } catch (error) {
+    logger.error(`Error updating profile: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to update profile" });
+  }
+};
+
+export const updatePassword = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: "Missing required fields" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({ success: false, error: "Invalid current password" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    res.json({ success: true, message: "Password updated successfully" });
+  } catch (error) {
+    logger.error(`Error updating password: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to update password" });
+  }
+};
+
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
