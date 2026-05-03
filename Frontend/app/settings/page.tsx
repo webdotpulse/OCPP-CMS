@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { Loader2, User, KeyRound } from "lucide-react";
@@ -17,6 +18,11 @@ import { api } from "@/lib/api";
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
+  userType: z.enum(["private", "company", "employee"]),
+  companyName: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  taxNumber: z.string().optional().nullable(),
 });
 
 const passwordSchema = z.object({
@@ -41,6 +47,11 @@ export default function SettingsPage() {
     defaultValues: {
       name: "",
       email: "",
+      userType: "private",
+      companyName: "",
+      address: "",
+      phone: "",
+      taxNumber: "",
     }
   });
 
@@ -53,6 +64,11 @@ export default function SettingsPage() {
       profileForm.reset({
         name: user.name || "",
         email: user.email,
+        userType: user.userType || "private",
+        companyName: user.companyName || "",
+        address: user.address || "",
+        phone: user.phone || "",
+        taxNumber: user.taxNumber || "",
       });
     }
   }, [user, profileForm]);
@@ -119,6 +135,60 @@ export default function SettingsPage() {
                 <Input id="email" type="email" {...profileForm.register('email')} />
                 {profileForm.formState.errors.email && (
                   <p className="text-sm text-destructive">{profileForm.formState.errors.email.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="userType">User Type</Label>
+                <Select
+                  value={profileForm.watch('userType')}
+                  onValueChange={(val: any) => profileForm.setValue('userType', val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select user type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="private">Private</SelectItem>
+                    <SelectItem value="company">Company</SelectItem>
+                    <SelectItem value="employee">Employee</SelectItem>
+                  </SelectContent>
+                </Select>
+                {profileForm.formState.errors.userType && (
+                  <p className="text-sm text-destructive">{profileForm.formState.errors.userType.message}</p>
+                )}
+              </div>
+
+              {profileForm.watch('userType') !== 'private' && (
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Company Name</Label>
+                  <Input id="companyName" {...profileForm.register('companyName')} />
+                  {profileForm.formState.errors.companyName && (
+                    <p className="text-sm text-destructive">{profileForm.formState.errors.companyName.message}</p>
+                  )}
+                </div>
+              )}
+              {profileForm.watch('userType') !== 'private' && (
+                <div className="space-y-2">
+                  <Label htmlFor="taxNumber">Tax Number</Label>
+                  <Input id="taxNumber" {...profileForm.register('taxNumber')} />
+                  {profileForm.formState.errors.taxNumber && (
+                    <p className="text-sm text-destructive">{profileForm.formState.errors.taxNumber.message}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" type="tel" {...profileForm.register('phone')} />
+                {profileForm.formState.errors.phone && (
+                  <p className="text-sm text-destructive">{profileForm.formState.errors.phone.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input id="address" {...profileForm.register('address')} />
+                {profileForm.formState.errors.address && (
+                  <p className="text-sm text-destructive">{profileForm.formState.errors.address.message}</p>
                 )}
               </div>
             </CardContent>

@@ -9,6 +9,11 @@ export interface User {
   email: string;
   name?: string;
   role: string;
+  userType?: "private" | "company" | "employee";
+  companyName?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  taxNumber?: string | null;
 }
 
 interface AuthContextType {

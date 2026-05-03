@@ -1,0 +1,23 @@
+   ▲ Next.js 15.5.15
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.0.2:3002
+
+ ✓ Starting...
+ ✓ Ready in 2s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1278ms (114 modules)
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 12.3s (1362 modules)
+ GET /settings 200 in 14196ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 2.9s (1366 modules)
+ GET /login 200 in 3589ms
+ GET /settings 200 in 2888ms
+ GET /settings 200 in 164ms
+ GET /login 200 in 71ms
+ GET /login 200 in 155ms
+ GET /settings 200 in 198ms
+ GET /login 200 in 55ms
+ GET /login 200 in 139ms
+ GET /settings 200 in 128ms
+ GET /settings 200 in 109ms

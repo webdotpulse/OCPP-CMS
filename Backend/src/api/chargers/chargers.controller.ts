@@ -265,7 +265,7 @@ export const createCharger = async (req: Request, res: Response) => {
         ...rest,
         model: rest.model || "Pending",
         manufacturer: rest.manufacturer || "Pending",
-        serial_number: rest.serial_number || "Pending",
+        serial_number: rest.serial_number || `Pending-${Date.now()}`,
         firmware_version: rest.firmware_version || "Pending",
         tariffs: tariffId ? { connect: { tariff_id: tariffId } } : undefined,
       },
