@@ -1,5 +1,6 @@
 "use client";
 import { logger } from "@/lib/logger";
+import { useAuth } from "@/hooks/useAuth";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -13,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { AlertCircle } from "lucide-react";
 
 export default function TariffsPage() {
+  const { user } = useAuth();
   const [tariffs, setTariffs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [apiError, setApiError] = useState(false);
@@ -85,11 +87,13 @@ export default function TariffsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Tariff Management</h1>
           <p className="text-muted-foreground">Manage pricing structures for charge points.</p>
         </div>
-        <Link href="/tariffs/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" /> Add Tariff Plan
-          </Button>
-        </Link>
+        {user?.role === "admin" && (
+          <Link href="/tariffs/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Add Tariff Plan
+            </Button>
+          </Link>
+        )}
       </div>
 
       {apiError && (
@@ -124,7 +128,7 @@ export default function TariffsPage() {
               <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort('electricity_rate')}>
                 <div className="flex items-center justify-end gap-1">Energy Rate <ArrowUpDown className="h-3 w-3" /></div>
               </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {user?.role === "admin" && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -147,16 +151,18 @@ export default function TariffsPage() {
                   </TableCell>
                   <TableCell className="text-right font-mono">€{Number(tariff.charge).toFixed(2)}</TableCell>
                   <TableCell className="text-right font-mono">€{Number(tariff.electricity_rate).toFixed(3)} / kWh</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Link href={`/tariffs/${tariff.tariff_id}/edit`}>
-                         <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
-                      </Link>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(tariff.tariff_id)} className="text-destructive hover:bg-destructive/10">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {user?.role === "admin" && (
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/tariffs/${tariff.tariff_id}/edit`}>
+                           <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
+                        </Link>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(tariff.tariff_id)} className="text-destructive hover:bg-destructive/10">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}

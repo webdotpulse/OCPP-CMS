@@ -35,6 +35,18 @@ export function authenticateToken(
 
     req.userId = decoded.userId;
     req.userRole = decoded.role;
+
+    // Enforce role-based access control for state-changing methods
+    if (req.userRole !== "admin") {
+      const isWriteMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method);
+      // Allow users to update their own profile and password
+      const isAuthExempt = req.path.includes("/me") || req.path.includes("/password");
+
+      if (isWriteMethod && !isAuthExempt) {
+        return res.status(403).json({ success: false, error: "Admin access required for this action" });
+      }
+    }
+
     next();
   } catch (error) {
     logger.error(`JWT verification failed: ${error}`);

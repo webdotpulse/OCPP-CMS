@@ -23,6 +23,15 @@ export const getAllConnectors = async (req: Request, res: Response) => {
       }
     }
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    if (userRole !== "admin") {
+      where.charger = { owner_id: userId };
+    }
+
     const [connectors, total] = await Promise.all([
       prisma.connector.findMany({
         skip,
@@ -67,8 +76,18 @@ export const getConnectorById = async (req: Request, res: Response) => {
       });
     }
 
-    const connector = await prisma.connector.findUnique({
-      where: { connector_id: connectorId },
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { connector_id: connectorId };
+    if (userRole !== "admin") {
+      where.charger = { owner_id: userId };
+    }
+
+    const connector = await prisma.connector.findFirst({
+      where,
       include: { charger: true },
     });
 

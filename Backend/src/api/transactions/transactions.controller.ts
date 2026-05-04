@@ -31,6 +31,15 @@ export const getAllTransactions = async (req: Request, res: Response) => {
       ];
     }
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    if (userRole !== "admin") {
+      where.charger = { owner_id: userId };
+    }
+
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
         skip,
@@ -86,8 +95,18 @@ export const getRfidSessionsByUser = async (req: Request, res: Response) => {
       });
     }
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { rfidUserId };
+    if (userRole !== "admin") {
+      where.charger = { owner_id: userId };
+    }
+
     const rfidSessions = await prisma.rfidSession.findMany({
-      where: { rfidUserId },
+      where,
       include: {
         charger: { include: { chargingStation: true } },
         rfidUser: true,
@@ -110,14 +129,24 @@ export const getRfidSessionsByUser = async (req: Request, res: Response) => {
  */
 export const getActiveTransactions = async (req: Request, res: Response) => {
   try {
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { status: "charging" };
+    if (userRole !== "admin") {
+      where.charger = { owner_id: userId };
+    }
+
     const [activeTransactions, activeRfidSessions] = await Promise.all([
       prisma.transaction.findMany({
-        where: { status: "charging" },
+        where,
         include: { charger: { include: { chargingStation: true } } },
         orderBy: { startTime: "desc" },
       }),
       prisma.rfidSession.findMany({
-        where: { status: "charging" },
+        where,
         include: { charger: { include: { chargingStation: true } }, rfidUser: true },
         orderBy: { startTime: "desc" },
       }),
@@ -152,14 +181,24 @@ export const getChargerTransactions = async (req: Request, res: Response) => {
       });
     }
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { charger_id };
+    if (userRole !== "admin") {
+      where.charger = { owner_id: userId };
+    }
+
     const [transactions, rfidSessions] = await Promise.all([
       prisma.transaction.findMany({
-        where: { charger_id },
+        where,
         include: { charger: true },
         orderBy: { createdAt: "desc" },
       }),
       prisma.rfidSession.findMany({
-        where: { charger_id },
+        where,
         include: { charger: true, rfidUser: true },
         orderBy: { createdAt: "desc" },
       }),
@@ -187,6 +226,18 @@ export const getChargerTransactions = async (req: Request, res: Response) => {
  */
 export const getTransactionStats = async (req: Request, res: Response) => {
   try {
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const baseWhereTx: any = {};
+    const baseWhereRfid: any = {};
+    if (userRole !== "admin") {
+      baseWhereTx.charger = { owner_id: userId };
+      baseWhereRfid.charger = { owner_id: userId };
+    }
+
     const [
       totalTransactions,
       completedTransactions,
@@ -195,14 +246,16 @@ export const getTransactionStats = async (req: Request, res: Response) => {
       completedRfidSessions,
       totalAmountDue,
     ] = await Promise.all([
-      prisma.transaction.count(),
-      prisma.transaction.count({ where: { status: "completed" } }),
+      prisma.transaction.count({ where: baseWhereTx }),
+      prisma.transaction.count({ where: { ...baseWhereTx, status: "completed" } }),
       prisma.transaction.aggregate({
+        where: baseWhereTx,
         _sum: { energyConsumed: true },
       }),
-      prisma.rfidSession.count(),
-      prisma.rfidSession.count({ where: { status: "completed" } }),
+      prisma.rfidSession.count({ where: baseWhereRfid }),
+      prisma.rfidSession.count({ where: { ...baseWhereRfid, status: "completed" } }),
       prisma.rfidSession.aggregate({
+        where: baseWhereRfid,
         _sum: { amountDue: true },
       }),
     ]);
@@ -210,6 +263,7 @@ export const getTransactionStats = async (req: Request, res: Response) => {
     const [todayTransactions, todayRfidSessions] = await Promise.all([
       prisma.transaction.count({
         where: {
+          ...baseWhereTx,
           createdAt: {
             gte: new Date(new Date().setHours(0, 0, 0, 0)),
           },
@@ -217,6 +271,7 @@ export const getTransactionStats = async (req: Request, res: Response) => {
       }),
       prisma.rfidSession.count({
         where: {
+          ...baseWhereRfid,
           createdAt: {
             gte: new Date(new Date().setHours(0, 0, 0, 0)),
           },
@@ -264,8 +319,18 @@ export const getTransactionById = async (req: Request, res: Response) => {
       });
     }
 
-    const transaction = await prisma.transaction.findUnique({
-      where: { id: transactionId },
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { id: transactionId };
+    if (userRole !== "admin") {
+      where.charger = { owner_id: userId };
+    }
+
+    const transaction = await prisma.transaction.findFirst({
+      where,
       include: { charger: { include: { chargingStation: true } } },
     });
 

@@ -23,6 +23,18 @@ export const getAllTariffs = async (req: Request, res: Response) => {
       };
     }
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    if (userRole !== "admin") {
+      where.OR = [
+        { chargers: { some: { owner_id: userId } } },
+        { chargeGroupUsers: { some: { userId } } }
+      ];
+    }
+
     const [tariffs, total] = await Promise.all([
       prisma.tariff.findMany({
         skip,

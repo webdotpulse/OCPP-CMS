@@ -21,6 +21,15 @@ export const getAllChargeGroups = async (req: Request, res: Response) => {
       ];
     }
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    if (userRole !== "admin") {
+      where.users = { some: { userId } };
+    }
+
     const [groups, total] = await Promise.all([
       prisma.chargeGroup.findMany({
         skip,
@@ -54,8 +63,18 @@ export const getChargeGroupById = async (req: Request, res: Response) => {
     const id = parseId(req.params.id);
     if (!id) return res.status(400).json({ success: false, error: "Invalid ID" });
 
-    const group = await prisma.chargeGroup.findUnique({
-      where: { id },
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { id };
+    if (userRole !== "admin") {
+      where.users = { some: { userId } };
+    }
+
+    const group = await prisma.chargeGroup.findFirst({
+      where,
       include: {
         chargers: true,
         users: { include: { user: true, tariff: true } }
