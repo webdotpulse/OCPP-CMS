@@ -16,6 +16,7 @@ import { ConnectorList } from "@/components/chargers/ConnectorList";
 import { ChargerConfigurationPanel } from "@/components/chargers/ChargerConfigurationPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadManagementOverview } from "@/components/dashboard/LoadManagementOverview";
+import { ChargerTransactionsTable } from "@/components/chargers/ChargerTransactionsTable";
 
 interface ChargerDetail {
   charger_id: number;
@@ -101,6 +102,7 @@ export default function ChargerDetailPage() {
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="configuration">Configuration Parameters</TabsTrigger>
         </TabsList>
 
@@ -205,6 +207,12 @@ export default function ChargerDetailPage() {
                 <ConnectorList connectors={charger.connectors} />
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="transactions">
+          <div className="mb-6">
+            <ChargerTransactionsTable chargerId={charger.charger_id} />
           </div>
         </TabsContent>
 

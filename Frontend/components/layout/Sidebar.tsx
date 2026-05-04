@@ -14,6 +14,7 @@ import {
   Zap,
   Users,
   Menu,
+  ReceiptText,
 } from 'lucide-react';
 
 const routes = [
@@ -23,6 +24,7 @@ const routes = [
   { name: 'Chargers', path: '/chargers', icon: Zap },
   { name: 'Charge Groups', path: '/charge-groups', icon: Users },
   { name: 'RFID Tags', path: '/rfid', icon: CreditCard },
+  { name: 'Transactions', path: '/transactions', icon: ReceiptText },
   { name: 'Tariffs', path: '/tariffs', icon: WalletCards },
   { name: 'Settings', path: '/settings', icon: Settings },
   { name: 'OCPP Console', path: '/ocpp', icon: TerminalSquare },

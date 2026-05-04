@@ -357,9 +357,15 @@ export const deleteCharger = async (req: Request, res: Response) => {
       });
     }
 
-    await prisma.charger.delete({
-      where: { charger_id: chargerId },
-    });
+    await prisma.$transaction([
+      prisma.transaction.deleteMany({ where: { charger_id: chargerId } }),
+      prisma.ocppLog.deleteMany({ where: { chargerId: chargerId } }),
+      prisma.rfidSession.deleteMany({ where: { charger_id: chargerId } }),
+      prisma.chargerConfiguration.deleteMany({ where: { chargerId: chargerId } }),
+      prisma.chargingProfile.deleteMany({ where: { chargerId: chargerId } }),
+      prisma.connector.deleteMany({ where: { charger_id: chargerId } }),
+      prisma.charger.delete({ where: { charger_id: chargerId } }),
+    ]);
 
     logger.info(`Charger deleted: ID ${chargerId}`);
     res.json({ success: true, message: "Charger deleted" });
