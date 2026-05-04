@@ -18,6 +18,9 @@ class OcppServer {
         if (protocols.has("ocpp2.1")) return "ocpp2.1";
         if (protocols.has("ocpp2.0.1")) return "ocpp2.0.1";
         if (protocols.has("ocpp1.6")) return "ocpp1.6";
+        // If the client didn't send a protocol or sent an empty string, fallback to ocpp1.6
+        // Returning false would reject the connection for clients not sending the header.
+        if (protocols.size === 0) return "ocpp1.6";
         return false;
       },
     });

@@ -42,6 +42,7 @@ export interface ChargerConnection {
   chargerId: number;
   ws: any; // WebSocket connection
   chargerName: string;
+  protocol: string;
   connectedAt: Date;
   lastHeartbeat: Date;
   transactions: Map<string | number, ActiveTransaction>;
