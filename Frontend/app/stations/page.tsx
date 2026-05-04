@@ -1,5 +1,6 @@
 "use client";
 import { logger } from "@/lib/logger";
+import { useAuth } from "@/hooks/useAuth";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -30,6 +31,7 @@ interface Station {
 }
 
 export default function StationsPage() {
+  const { user } = useAuth();
   const [stations, setStations] = useState<Station[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -99,11 +101,13 @@ export default function StationsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Locations</h1>
           <p className="text-muted-foreground">Manage physical site locations for your EV chargers.</p>
         </div>
-        <Link href="/stations/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" /> Add Location
-          </Button>
-        </Link>
+        {user?.role === "admin" && (
+          <Link href="/stations/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Add Location
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="mb-4">
@@ -134,7 +138,7 @@ export default function StationsPage() {
               <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('status')}>
                 <div className="flex items-center gap-1">Status <ArrowUpDown className="h-3 w-3" /></div>
               </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {user?.role === "admin" && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -170,14 +174,16 @@ export default function StationsPage() {
                       {station.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Link href={`/stations/${station.id}/edit`}>
-                       <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
-                    </Link>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(station.id)} className="text-destructive hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                  {user?.role === "admin" && (
+                    <TableCell className="text-right">
+                      <Link href={`/stations/${station.id}/edit`}>
+                         <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
+                      </Link>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(station.id)} className="text-destructive hover:bg-destructive/10">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}

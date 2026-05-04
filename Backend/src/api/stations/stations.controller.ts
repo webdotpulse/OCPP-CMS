@@ -85,8 +85,18 @@ export const getStationById = async (req: Request, res: Response) => {
       });
     }
 
-    const station = await prisma.chargingStation.findUnique({
-      where: { id: stationId },
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { id: stationId };
+    if (userRole !== "admin") {
+      where.owner_id = userId;
+    }
+
+    const station = await prisma.chargingStation.findFirst({
+      where,
       include: {
         owner: { select: { id: true, email: true } },
         chargers: {
@@ -126,8 +136,18 @@ export const getStationChargers = async (req: Request, res: Response) => {
       });
     }
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { charging_station_id: stationId };
+    if (userRole !== "admin") {
+      where.owner_id = userId;
+    }
+
     const chargers = await prisma.charger.findMany({
-      where: { charging_station_id: stationId },
+      where,
       include: { connectors: true },
       orderBy: { createdAt: "desc" },
     });

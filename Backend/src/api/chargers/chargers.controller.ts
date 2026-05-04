@@ -49,8 +49,18 @@ export const getChargerLogs = async (req: Request, res: Response) => {
 
     const { limit = 50 } = req.query;
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { chargerId };
+    if (userRole !== "admin") {
+      where.charger = { owner_id: userId };
+    }
+
     const logs = await prisma.ocppLog.findMany({
-      where: { chargerId },
+      where,
       orderBy: { timestamp: "desc" },
       take: Number(limit),
     });
@@ -79,8 +89,18 @@ export const getChargerConfigurations = async (req: Request, res: Response) => {
       });
     }
 
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { chargerId };
+    if (userRole !== "admin") {
+      where.charger = { owner_id: userId };
+    }
+
     const configs = await prisma.chargerConfiguration.findMany({
-      where: { chargerId },
+      where,
       orderBy: { key: "asc" },
     });
 
@@ -165,8 +185,18 @@ export const getChargerById = async (req: Request, res: Response) => {
       });
     }
 
-    const charger = await prisma.charger.findUnique({
-      where: { charger_id: chargerId },
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { charger_id: chargerId };
+    if (userRole !== "admin") {
+      where.owner_id = userId;
+    }
+
+    const charger = await prisma.charger.findFirst({
+      where,
       include: {
         chargingStation: true,
         connectors: true,
@@ -207,8 +237,18 @@ export const getChargerStatus = async (req: Request, res: Response) => {
       });
     }
 
-    const charger = await prisma.charger.findUnique({
-      where: { charger_id: chargerId },
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { charger_id: chargerId };
+    if (userRole !== "admin") {
+      where.owner_id = userId;
+    }
+
+    const charger = await prisma.charger.findFirst({
+      where,
       select: {
         charger_id: true,
         name: true,

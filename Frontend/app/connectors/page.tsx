@@ -1,5 +1,6 @@
 "use client";
 import { logger } from "@/lib/logger";
+import { useAuth } from "@/hooks/useAuth";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -11,6 +12,7 @@ import { Plus, Edit, Trash2, PlugZap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function ConnectorsPage() {
+  const { user } = useAuth();
   const [connectors, setConnectors] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,11 +57,13 @@ export default function ConnectorsPage() {
           <h1 className="text-2xl font-bold tracking-tight">All Connectors</h1>
           <p className="text-muted-foreground">Global view of all charge points and their hardware connectors.</p>
         </div>
-        <Link href="/connectors/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" /> Add Connector
-          </Button>
-        </Link>
+        {user?.role === "admin" && (
+          <Link href="/connectors/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Add Connector
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="rounded-md border bg-card">
@@ -71,7 +75,7 @@ export default function ConnectorsPage() {
               <TableHead>Type</TableHead>
               <TableHead>Max Power</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {user?.role === "admin" && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -100,16 +104,18 @@ export default function ConnectorsPage() {
                   </TableCell>
                   <TableCell>{conn.max_power ? `${conn.max_power} kW` : 'N/A'}</TableCell>
                   <TableCell>{getStatusBadge(conn.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Link href={`/connectors/${conn.connector_id}/edit`}>
-                         <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
-                      </Link>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(conn.connector_id)} className="text-destructive hover:bg-destructive/10">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {user?.role === "admin" && (
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/connectors/${conn.connector_id}/edit`}>
+                           <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
+                        </Link>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(conn.connector_id)} className="text-destructive hover:bg-destructive/10">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}

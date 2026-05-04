@@ -100,11 +100,13 @@ export default function UsersPage() {
             Manage system access, companies, employees, and private users.
           </p>
         </div>
-        <Link href="/users/create">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" /> Add User
-          </Button>
-        </Link>
+        {user?.role === "admin" && (
+          <Link href="/users/create">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" /> Add User
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="mb-4">
@@ -139,7 +141,7 @@ export default function UsersPage() {
                 <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('role')}>
                   <div className="flex items-center gap-1">Role <ArrowUpDown className="h-3 w-3" /></div>
                 </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {user?.role === "admin" && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -164,16 +166,18 @@ export default function UsersPage() {
                       </Badge>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <Link href={`/users/${u.id}/edit`}>
-                      <Button variant="ghost" size="icon">
-                        <Edit className="h-4 w-4" />
+                  {user?.role === "admin" && (
+                    <TableCell className="text-right">
+                      <Link href={`/users/${u.id}/edit`}>
+                        <Button variant="ghost" size="icon">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(u.id)}>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    </Link>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(u.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
               {!isLoading && sortedUsers.length === 0 && (

@@ -79,8 +79,18 @@ export const getRfidUserById = async (req: Request, res: Response) => {
       });
     }
 
-    const rfidUser = await prisma.rfidUser.findUnique({
-      where: { rfid_user_id: rfidUserId },
+    // @ts-expect-error userRole is attached by authenticateToken middleware
+    const userRole = req.userRole;
+    // @ts-expect-error userId is attached by authenticateToken middleware
+    const userId = req.userId;
+
+    const where: any = { rfid_user_id: rfidUserId };
+    if (userRole !== "admin") {
+      where.owner_id = userId;
+    }
+
+    const rfidUser = await prisma.rfidUser.findFirst({
+      where,
       include: {
         owner: { select: { id: true, email: true } },
         rfidSessions: { take: 10, orderBy: { createdAt: "desc" } },

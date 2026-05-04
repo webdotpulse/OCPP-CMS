@@ -1,5 +1,6 @@
 "use client";
 import { logger } from "@/lib/logger";
+import { useAuth } from "@/hooks/useAuth";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -13,6 +14,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Input } from "@/components/ui/input";
 
 export default function ChargersPage() {
+  const { user } = useAuth();
   const [chargers, setChargers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -98,16 +100,20 @@ export default function ChargersPage() {
           <p className="text-muted-foreground">Manage OCPP charging points across all stations.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/chargers/unrecognized">
-            <Button variant="secondary">
-              View Unrecognized
-            </Button>
-          </Link>
-          <Link href="/chargers/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add Charger
-            </Button>
-          </Link>
+          {user?.role === "admin" && (
+            <Link href="/chargers/unrecognized">
+              <Button variant="secondary">
+                View Unrecognized
+              </Button>
+            </Link>
+          )}
+          {user?.role === "admin" && (
+            <Link href="/chargers/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Add Charger
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -142,7 +148,7 @@ export default function ChargersPage() {
               <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('last_heartbeat')}>
                 <div className="flex items-center gap-1">Last Heartbeat <ArrowUpDown className="h-3 w-3" /></div>
               </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {user?.role === "admin" && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -172,14 +178,16 @@ export default function ChargersPage() {
                       ? `${formatDistanceToNow(new Date(charger.last_heartbeat))} ago` 
                       : 'Never'}
                   </TableCell>
-                  <TableCell className="text-right flex items-center justify-end gap-2">
-                    <Link href={`/chargers/${charger.charger_id}/edit`}>
-                       <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
-                    </Link>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(charger.charger_id)} className="text-destructive hover:bg-destructive/10">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                  {user?.role === "admin" && (
+                    <TableCell className="text-right flex items-center justify-end gap-2">
+                      <Link href={`/chargers/${charger.charger_id}/edit`}>
+                         <Button variant="ghost" size="icon"><Edit className="h-4 w-4" /></Button>
+                      </Link>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(charger.charger_id)} className="text-destructive hover:bg-destructive/10">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
