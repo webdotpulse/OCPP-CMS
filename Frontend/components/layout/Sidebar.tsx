@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 import {
   BarChart3,
   MapPin,
@@ -18,22 +19,23 @@ import {
 } from 'lucide-react';
 
 const routes = [
-  { name: 'Dashboard', path: '/dashboard', icon: BarChart3 },
-  { name: 'Customers', path: '/users', icon: Users, adminOnly: true },
-  { name: 'Locations', path: '/stations', icon: MapPin },
-  { name: 'Chargers', path: '/chargers', icon: Zap },
-  { name: 'Charge Groups', path: '/charge-groups', icon: Users },
-  { name: 'RFID Tags', path: '/rfid', icon: CreditCard },
-  { name: 'Transactions', path: '/transactions', icon: ReceiptText },
-  { name: 'Tariffs', path: '/tariffs', icon: WalletCards },
-  { name: 'Roaming', path: '/roaming', icon: Globe, adminOnly: true },
-  { name: 'Settings', path: '/settings', icon: Settings },
-  { name: 'OCPP Console', path: '/ocpp', icon: TerminalSquare },
+  { key: 'nav.dashboard', path: '/dashboard', icon: BarChart3 },
+  { key: 'nav.customers', path: '/users', icon: Users, adminOnly: true },
+  { key: 'nav.locations', path: '/stations', icon: MapPin },
+  { key: 'nav.chargers', path: '/chargers', icon: Zap },
+  { key: 'nav.chargeGroups', path: '/charge-groups', icon: Users },
+  { key: 'nav.rfidTags', path: '/rfid', icon: CreditCard },
+  { key: 'nav.transactions', path: '/transactions', icon: ReceiptText },
+  { key: 'nav.tariffs', path: '/tariffs', icon: WalletCards },
+  { key: 'nav.roaming', path: '/roaming', icon: Globe, adminOnly: true },
+  { key: 'nav.settings', path: '/settings', icon: Settings },
+  { key: 'nav.ocppConsole', path: '/ocpp', icon: TerminalSquare },
 ];
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean, setIsCollapsed: (val: boolean) => void }) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <aside className={cn("border-r flex flex-col h-screen fixed left-0 top-0 transition-all duration-300 bg-[#009C9F] dark:bg-slate-900 text-white", isCollapsed ? "w-16" : "w-64")}>
@@ -64,10 +66,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: { isCollapsed: boolean,
                   ? "bg-white/20 font-medium"
                   : "text-white/80 hover:bg-white/10 hover:text-white"
               )}
-              title={isCollapsed ? route.name : undefined}
+              title={isCollapsed ? t(route.key) : undefined}
             >
               <Icon className="h-5 w-5" />
-              {!isCollapsed && route.name}
+              {!isCollapsed && t(route.key)}
             </Link>
           );
         })}

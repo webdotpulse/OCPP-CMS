@@ -1,0 +1,39 @@
+{
+  "translation": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "customers": "Klanten",
+      "locations": "Locaties",
+      "chargers": "Laders",
+      "chargeGroups": "Laadgroepen",
+      "rfidTags": "RFID Tags",
+      "transactions": "Transacties",
+      "tariffs": "Tarieven",
+      "roaming": "Roaming",
+      "settings": "Instellingen",
+      "ocppConsole": "OCPP Console"
+    },
+    "topbar": {
+      "guide": "Gids",
+      "toggleTheme": "Thema wisselen",
+      "light": "Licht",
+      "dark": "Donker",
+      "system": "Systeem",
+      "myAccount": "Mijn Account",
+      "role": "Rol",
+      "logout": "Uitloggen"
+    },
+    "dashboard": {
+      "systemOverview": "Systeemoverzicht",
+      "systemOverviewDesc": "Bewaak realtime statistieken en laadstatus in uw netwerk.",
+      "totalChargers": "Totaal Laders",
+      "totalChargersDesc": "Verbonden eindpunten",
+      "activeSessions": "Actieve Sessies",
+      "activeSessionsDesc": "Momenteel aan het laden",
+      "energyToday": "Energie Vandaag",
+      "energyTodayDesc": "Totaal geleverd",
+      "revenueToday": "Omzet Vandaag",
+      "revenueTodayDesc": "Geschat achteraf betaald"
+    }
+  }
+}

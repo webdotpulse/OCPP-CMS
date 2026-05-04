@@ -2,7 +2,8 @@ import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun, LogOut, User, HelpCircle } from 'lucide-react';
+import { Moon, Sun, LogOut, User, HelpCircle, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ export function Topbar() {
   const pathname = usePathname();
   const { setTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
 
   // Simple breadcrumb logic
   const pathSegments = pathname.split('/').filter(Boolean);
@@ -32,23 +34,36 @@ export function Topbar() {
 
       <div className="flex items-center gap-4">
         <Link href="/guide" passHref>
-          <Button variant="ghost" size="icon" title="Guide">
+          <Button variant="ghost" size="icon" title={t('topbar.guide')}>
             <HelpCircle className="h-5 w-5" />
-            <span className="sr-only">Guide</span>
+            <span className="sr-only">{t('topbar.guide')}</span>
           </Button>
         </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" title="Language">
+              <Languages className="h-[1.2rem] w-[1.2rem]" />
+              <span className="sr-only">Language switcher</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => i18n.changeLanguage("en")}>English</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => i18n.changeLanguage("nl")}>Nederlands</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
               <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
+              <span className="sr-only">{t('topbar.toggleTheme')}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme("light")}>{t('topbar.light')}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme("dark")}>{t('topbar.dark')}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme("system")}>{t('topbar.system')}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -62,13 +77,13 @@ export function Topbar() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>{t('topbar.myAccount')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>Role: {user?.role || 'Operator'}</DropdownMenuItem>
+            <DropdownMenuItem disabled>{t('topbar.role')}: {user?.role || 'Operator'}</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive focus:bg-destructive focus:text-destructive-foreground cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
+              <span>{t('topbar.logout')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

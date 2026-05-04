@@ -1,0 +1,39 @@
+{
+  "translation": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "customers": "Customers",
+      "locations": "Locations",
+      "chargers": "Chargers",
+      "chargeGroups": "Charge Groups",
+      "rfidTags": "RFID Tags",
+      "transactions": "Transactions",
+      "tariffs": "Tariffs",
+      "roaming": "Roaming",
+      "settings": "Settings",
+      "ocppConsole": "OCPP Console"
+    },
+    "topbar": {
+      "guide": "Guide",
+      "toggleTheme": "Toggle theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "myAccount": "My Account",
+      "role": "Role",
+      "logout": "Log out"
+    },
+    "dashboard": {
+      "systemOverview": "System Overview",
+      "systemOverviewDesc": "Monitor real-time metrics and charger status across your network.",
+      "totalChargers": "Total Chargers",
+      "totalChargersDesc": "Connected endpoints",
+      "activeSessions": "Active Sessions",
+      "activeSessionsDesc": "Currently charging",
+      "energyToday": "Energy Today",
+      "energyTodayDesc": "Total dispensed",
+      "revenueToday": "Revenue Today",
+      "revenueTodayDesc": "Estimated post-paid"
+    }
+  }
+}

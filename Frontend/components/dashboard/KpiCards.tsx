@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Zap, Activity, Banknote, BatteryCharging } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface OverviewMetrics {
   totalChargers: number;
@@ -16,6 +17,7 @@ interface OverviewMetrics {
 export function KpiCards() {
   const [metrics, setMetrics] = useState<OverviewMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchOverview = async () => {
@@ -36,28 +38,28 @@ export function KpiCards() {
 
   const cards = [
     {
-      title: 'Total Chargers',
+      title: t('dashboard.totalChargers'),
       value: metrics?.totalChargers || 0,
       icon: Zap,
-      description: 'Connected endpoints',
+      description: t('dashboard.totalChargersDesc'),
     },
     {
-      title: 'Active Sessions',
+      title: t('dashboard.activeSessions'),
       value: metrics?.activeSessions || 0,
       icon: Activity,
-      description: 'Currently charging',
+      description: t('dashboard.activeSessionsDesc'),
     },
     {
-      title: 'Energy Today',
+      title: t('dashboard.energyToday'),
       value: `${metrics?.energyToday?.toFixed(2) || 0} kWh`,
       icon: BatteryCharging,
-      description: 'Total dispensed',
+      description: t('dashboard.energyTodayDesc'),
     },
     {
-      title: 'Revenue Today',
+      title: t('dashboard.revenueToday'),
       value: `$${metrics?.revenueToday?.toFixed(2) || 0}`,
       icon: Banknote,
-      description: 'Estimated post-paid',
+      description: t('dashboard.revenueTodayDesc'),
     },
   ];
 

@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
 import { AppShell } from '@/components/layout/AppShell';
 import { KpiCards } from '@/components/dashboard/KpiCards';
 import { LiveSessionsTable } from '@/components/dashboard/LiveSessionsTable';
@@ -5,13 +8,15 @@ import { ConnectorDistribution } from '@/components/dashboard/ConnectorDistribut
 import { LocationsMap } from '@/components/dashboard/LocationsMap';
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
+
   return (
     <AppShell>
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">System Overview</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t('dashboard.systemOverview')}</h2>
           <p className="text-muted-foreground">
-            Monitor real-time metrics and charger status across your network.
+            {t('dashboard.systemOverviewDesc')}
           </p>
         </div>
 
