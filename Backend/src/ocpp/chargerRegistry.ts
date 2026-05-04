@@ -46,17 +46,19 @@ class ChargerRegistry {
    * Register a new charger connection
    */
   async register(chargerId: number, chargerName: string, ws: any): Promise<void> {
+    const protocol = ws.protocol || "ocpp1.6";
     const connection: ChargerConnection = {
       chargerId,
       ws,
       chargerName,
+      protocol,
       connectedAt: new Date(),
       lastHeartbeat: new Date(),
       transactions: new Map(),
     };
 
     this.chargers.set(chargerId, connection);
-    logger.info(`Charger registered locally: ${chargerName} (ID: ${chargerId})`);
+    logger.info(`Charger registered locally: ${chargerName} (ID: ${chargerId}) with protocol: ${protocol}`);
 
     // Cache connection metadata in Redis
     try {
@@ -65,7 +67,8 @@ class ChargerRegistry {
         "chargerName", chargerName,
         "connectedAt", connection.connectedAt.toISOString(),
         "lastHeartbeat", connection.lastHeartbeat.toISOString(),
-        "status", "connected"
+        "status", "connected",
+        "protocol", protocol
       );
       // Expire session data slightly longer than offline threshold to avoid premature cleanup
       await redisClient.expire(this.getRedisKey(chargerId), this.offlineThreshold / 1000 * 2);
