@@ -112,29 +112,45 @@ pg_restore -U cms_user -W -d ocpp_cms -1 /home/$USER/ocpp_cms_backup_YYYY-MM-DD.
 
 ## 4. Redis Management
 
-The CMS utilizes Redis for caching, rate-limiting, and Pub/Sub message brokering across Node.js instances.
+The CMS utilizes Redis for caching, rate-limiting, and Pub/Sub message brokering across Node.js instances. A running Redis server is strictly required for the backend to function.
 
 ### Checking Redis Status
 ```bash
-sudo systemctl status redis.service
+sudo systemctl status redis-server
 ```
 
 ### Restarting Redis
 If you encounter caching anomalies or need to flush the cache after a significant database alteration:
 ```bash
-sudo systemctl restart redis.service
+sudo systemctl restart redis-server
 ```
 
 ### Accessing Redis CLI
 To view cached data or manage keys manually:
 ```bash
 redis-cli
+
+# Example: View all active keys
+127.0.0.1:6379> KEYS *
+```
+
+---
+
+## 5. Load Management Service
+
+The backend dynamically dispatches power limits (via the `SetChargingProfile` OCPP command) using the `LoadManagementService`.
+This service continually analyzes active charging sessions to prevent grid overload by obeying the Station or Charge Group's `maxPower` settings.
+
+### Checking Load Management Activity
+The Load Management Service logs are part of the standard backend logs. You can monitor its calculations via PM2:
+```bash
+pm2 logs ocpp-backend --grep "LoadManagement"
 ```
 
 
 ---
 
-## 5. SSL Certificates (Certbot / Let's Encrypt)
+## 6. SSL Certificates (Certbot / Let's Encrypt)
 
 The VM uses Certbot to manage Let's Encrypt SSL certificates.
 
@@ -156,7 +172,7 @@ sudo certbot renew
 
 ---
 
-## 6. Security & Firewall (UFW)
+## 7. Security & Firewall (UFW)
 
 The VM relies on UFW (Uncomplicated Firewall) combined with GCP's VPC Firewall rules.
 
@@ -174,7 +190,7 @@ You should see rules allowing:
 
 ---
 
-## 7. Updating the Application
+## 8. Updating the Application
 
 When new changes are pushed to the GitHub repository, here is the general workflow to deploy them to the VM:
 

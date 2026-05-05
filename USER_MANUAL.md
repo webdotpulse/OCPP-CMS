@@ -5,12 +5,13 @@ Welcome to the User Manual for the Open-Source OCPP 1.6 & 2.1/2.0.1 Charge Point
 ## Table of Contents
 
 1. [Dashboard Overview](#dashboard-overview)
-2. [Managing Charging Stations](#managing-charging-stations)
+2. [Managing Charging Stations & Load Management](#managing-charging-stations--load-management)
 3. [Managing Chargers & Connectors](#managing-chargers--connectors)
 4. [Managing RFID Tags](#managing-rfid-tags)
 5. [Remote Operations](#remote-operations)
 6. [Viewing Transactions & Sessions](#viewing-transactions--sessions)
 7. [Live OCPP Logs Viewer](#live-ocpp-logs-viewer)
+8. [Roaming & External Integrations](#roaming--external-integrations)
 
 ---
 
@@ -33,9 +34,9 @@ A visual breakdown showing the current state of all connectors:
 
 ---
 
-## 2. Managing Charging Stations
+## 2. Managing Charging Stations & Load Management
 
-A **Charging Station** represents a physical location or site where chargers are installed.
+A **Charging Station** (or Location) represents a physical site where chargers are installed. The CMS supports intelligent load management at the station level.
 
 ### Viewing Stations
 Navigate to the **Stations** tab to see a list of all your locations. You can see the name, address, contact person, and the number of chargers at each site.
@@ -47,6 +48,7 @@ Navigate to the **Stations** tab to see a list of all your locations. You can se
    - Complete Address (Street, City, State, Postal Code)
    - Coordinates (Latitude and Longitude)
    - On-site contact information (Name, Contact Details, Emergency Contact)
+   - **Max Power (kW):** To enable Smart Charging and Load Management, set the total power capacity available at this site. The system will dynamically distribute this power among active chargers.
 3. Click **Save**.
 
 ### Editing or Deleting
@@ -137,6 +139,16 @@ For technical debugging, the CMS provides a real-time log viewer.
    - `MeterValues`
    - `StatusNotification`
 4. This tool is invaluable for troubleshooting connectivity issues or analyzing charger behavior without needing access to backend server console logs.
+
+---
+
+## 8. Roaming & External Integrations
+
+The CMS includes foundational support for connecting with external roaming hubs and eMobility Service Providers (eMSPs) using standard protocols like OCPI and OICP.
+
+1. Navigate to the **Roaming** tab in the dashboard.
+2. Here you can configure endpoints and credentials for external networks.
+3. When properly configured, this allows EV drivers from other networks to authenticate and charge at your stations, and for automated CDR (Charge Detail Record) exchange.
 
 ---
 *For further technical support or configuration, refer to the `README.md` and `SETUP.md` files located in the project root.*

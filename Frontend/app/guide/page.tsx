@@ -75,9 +75,27 @@ export default function GuidePage() {
               <li>
                 Save the charger. Once created, configure your physical charging
                 hardware to connect to our OCPP WebSocket URL using the Identity
-                you specified.
+                you specified. The endpoint structure is:
+                <div className="bg-muted p-2 mt-2 rounded font-mono text-xs text-foreground overflow-x-auto">
+                  ws://&lt;host&gt;:9220/OCPP/[1.6|2.1]/&lt;charger-id&gt;
+                </div>
               </li>
             </ol>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Advanced Features</CardTitle>
+            <CardDescription>Roaming and Load Management</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm text-muted-foreground">
+            <p>
+              <strong>Smart Charging & Load Management:</strong> Protect your grid connection by setting a maximum power limit on a Location or Charge Group. The system will dynamically distribute available power to active charging sessions via OCPP `SetChargingProfile` commands.
+            </p>
+            <p>
+              <strong>Roaming (OCPI & OICP):</strong> MobilityPulse supports foundational integration with external roaming hubs. Configure your endpoints on the <em>Roaming</em> page to allow cross-network drivers to use your chargers.
+            </p>
           </CardContent>
         </Card>
       </div>

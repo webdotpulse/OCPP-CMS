@@ -92,6 +92,8 @@ flowchart TD
     OCPP -->|"Real-time\nlog broadcast"| LOGS
     OCPP <-->|"Pub/Sub\n& Caching"| REDIS[("Redis Cache")]
     API <-->|"Pub/Sub\n& Caching"| REDIS
+    API -->|"Dynamic Power Limits"| LMS["Load Management Service"]
+    LMS -->|"SetChargingProfile"| OCPP
 ```
 
 ### Key Data Flows
@@ -173,15 +175,19 @@ open-source-csms/
 - Define and manage tariffs per station
 - Associate pricing with charging sessions
 
-### 🔗 OCPI Integration (Placeholder)
-- Foundational schema and placeholder routes configured for future OCPI 2.2.1 roaming implementations.
+### ⚡ Smart Charging & Load Management
+- Intelligent power distribution via `LoadManagementService`.
+- Dynamically recalculates and dispatches `SetChargingProfile` commands based on active sessions and `maxPower` capacity at the Station and Charge Group level.
+
+### 🔗 OCPI & OICP Roaming Integration (Partial)
+- Foundational database schema (`OcpiEndpoint`, `OicpEndpoint`), routing (`/api/ocpi`, `/api/oicp`), and a dedicated `/roaming` admin page configured for EV roaming and CDR exchange integrations.
 
 ### 💳 Payments Integration (Placeholder)
 - Placeholder models and routes added to enable future Stripe/Mollie integration for automated transaction billing.
 
-### 🔒 Authentication
-- JWT-based authentication for the admin dashboard
-- Role-based access control
+### 🔒 Authentication & Security
+- JWT-based authentication for the admin dashboard with role-based access control.
+- Explicit Postgres 15+ schema privilege management via Prisma.
 
 ---
 
