@@ -26,18 +26,17 @@ The Open-Source OCPP 1.6 & 2.1/2.0.1 CMS provides a solid, barebone foundation f
 
 ### CI/CD Pipelines
 - **Goal:** Automate code linting, testing, and deployment.
-- **Action:** Add GitHub Actions workflows to run Prisma checks, TypeScript compilation, and automated test suites on every pull request.
+- **Action:** Add GitHub Actions workflows to run Prisma checks, TypeScript compilation, Playwright E2E tests for the frontend, and Jest test suites for the backend on every pull request.
 
 ## 3. Advanced Features
 
-### OCPI (Open Charge Point Interface) Integration - *Foundation Laid*
-- **Current State:** Placeholder routes (`/api/ocpi`) and foundational database schema support are in place.
-- **Goal:** Enable roaming, allowing EV drivers from other networks to use your chargers.
-- **Action:** Implement an OCPI module (e.g., OCPI 2.2.1) to handle location data sharing, roaming authorization, and CDR (Charge Detail Record) exchange.
+### OCPI & OICP Roaming Integration - *Partially Implemented*
+- **Current State:** Database schema support for `OcpiEndpoint` and `OicpEndpoint` is present, alongside functional API routes (`/api/ocpi`, `/api/oicp`) and a dedicated Admin Dashboard page (`/roaming`) to manage endpoint configurations.
+- **Goal:** Fully enable EV roaming, allowing cross-network driver authentication and CDR reconciliation.
+- **Action:** Finalize the business logic for real-time location data sharing, remote authorization, and automated CDR (Charge Detail Record) exchange.
 
-### Smart Charging & Load Management
-- **Goal:** Optimize power distribution across multiple chargers at a single site to prevent grid overload.
-- **Action:** Implement OCPP Smart Charging profiles (e.g., `SetChargingProfile`) to dynamically adjust power limits based on site capacity.
+### Smart Charging & Load Management - *Completed*
+- **Current State:** Dynamic Load Management is fully implemented via `LoadManagementService.ts`, applying intelligent power limits (`SetChargingProfile`) and recalculating distribution based on active sessions and `maxPower` capacity settings at the `ChargingStation` and `ChargeGroup` levels.
 
 ### Payment Gateway Integration - *Foundation Laid*
 - **Current State:** Placeholder API routes (`/api/payments`) and base database models (`PaymentTransaction`) exist to support future integrations.
@@ -51,6 +50,20 @@ The Open-Source OCPP 1.6 & 2.1/2.0.1 CMS provides a solid, barebone foundation f
 ### Advanced Analytics & Reporting
 - **Goal:** Provide operators with deep insights into their network performance.
 - **Action:** Integrate tools like Grafana, or build advanced Recharts views in the Next.js dashboard for revenue tracking, charger uptime SLAs, and usage trends over time.
+
+## 4. Newly Proposed Enhancements
+
+### PgBouncer for Database Connection Pooling
+- **Goal:** Prevent database connection exhaustion under heavy concurrent load.
+- **Action:** Introduce PgBouncer in the infrastructure layer. Prisma can quickly consume maximum PostgreSQL connections in a horizontal Node.js cluster; PgBouncer provides lightweight connection management.
+
+### Advanced Tariff Management & Billing
+- **Goal:** Support highly complex, enterprise-grade pricing models.
+- **Action:** Extend the tariff system to support Time-of-Use (TOU) pricing, step tariffs (pricing based on energy delivered thresholds), idle fees, and integration with OCPP 2.0.1 advanced cost calculation mechanisms.
+
+### WebSocket Connection Resilience
+- **Goal:** Maintain seamless OCPP connections during backend deployments or horizontal scaling events.
+- **Action:** Implement sticky sessions at the load balancer or migrate to a unified connection state registry to gracefully transition active WebSocket connections without dropping charging sessions.
 
 ---
 
