@@ -41,7 +41,7 @@ export function ChannelLogs({ chargerId, connectorId }: ChannelLogsProps) {
   const enrichLog = useCallback((rawLog: any): ChannelLog | null => {
     let parsedMsg: any = null;
     let messageType = rawLog.direction === 'in' ? 'RX' : 'TX';
-    let action = '-';
+    let action = rawLog.action || '-';
     let payload = rawLog.message;
 
     try {
@@ -73,7 +73,7 @@ export function ChannelLogs({ chargerId, connectorId }: ChannelLogsProps) {
         };
       }
     } else if (parsedMsg && typeof parsedMsg === 'object') {
-      if (rawLog.direction === 'in') {
+      if (action === '-' && rawLog.direction === 'in') {
         if (parsedMsg.chargePointVendor) action = 'BootNotification';
         else if (parsedMsg.meterStart !== undefined || (parsedMsg.idTag && parsedMsg.connectorId)) action = 'StartTransaction';
         else if (parsedMsg.meterStop !== undefined) action = 'StopTransaction';
@@ -113,14 +113,9 @@ export function ChannelLogs({ chargerId, connectorId }: ChannelLogsProps) {
       payload = { ...payload, summary: `Power: ${powerValue > 0 ? (powerValue/1000).toFixed(2) : '-'} kW, Energy: ${energyValue > 0 ? (energyValue/1000).toFixed(2) : '-'} kWh` };
     }
 
-    // Filter by connectorId
-    if (payload?.connectorId !== undefined && payload.connectorId !== connectorId) {
-      if (action === 'BootNotification' || action === 'Heartbeat') {
-         // BootNotification and Heartbeat are not connector specific usually, but if there's connectorId we filter.
-         // Wait, Heartbeat doesn't have connectorId.
-      } else {
-         return null;
-      }
+    // Filter by connectorId only if explicitly targeting another non-zero connector
+    if (payload?.connectorId !== undefined && payload.connectorId !== 0 && payload.connectorId !== connectorId) {
+       return null;
     }
 
     // Check evseId for OCPP 2.0.1

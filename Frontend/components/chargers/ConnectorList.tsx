@@ -41,6 +41,58 @@ function getStatusColor(status: string) {
 
 export function ConnectorList({ connectors }: ConnectorListProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [activeTxns, setActiveTxns] = useState<any[]>([]);
+  const [now, setNow] = useState(Date.now());
+
+  React.useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  React.useEffect(() => {
+    const chargerId = connectors[0]?.charger_id;
+    if (!chargerId) return;
+
+    const fetchActiveTxns = async () => {
+      try {
+        const { api } = await import('@/lib/api');
+        const response = await api.get(`/transactions/charger/${chargerId}`);
+        const payload = response.data;
+        let allTxns: any[] = [];
+        if (payload && payload.data) {
+          const basicTxns = Array.isArray(payload.data.transactions) ? payload.data.transactions : [];
+          const rfidTxns = Array.isArray(payload.data.rfidSessions) ? payload.data.rfidSessions : [];
+          const basicTxnIds = new Set(basicTxns.map((t: any) => t.transactionId));
+          const uniqueRfidTxns = rfidTxns.filter((s: any) => !basicTxnIds.has(s.transactionId));
+          allTxns = [...basicTxns, ...uniqueRfidTxns];
+        } else if (payload && (payload.transactions || payload.rfidSessions)) {
+          const basicTxns = Array.isArray(payload.transactions) ? payload.transactions : [];
+          const rfidTxns = Array.isArray(payload.rfidSessions) ? payload.rfidSessions : [];
+          const basicTxnIds = new Set(basicTxns.map((t: any) => t.transactionId));
+          const uniqueRfidTxns = rfidTxns.filter((s: any) => !basicTxnIds.has(s.transactionId));
+          allTxns = [...basicTxns, ...uniqueRfidTxns];
+        }
+
+        setActiveTxns(allTxns.filter(t => t.status === 'charging' || t.status === 'Preparing' || t.endTime === null));
+      } catch (err) {
+        // silently fail
+      }
+    };
+
+    fetchActiveTxns();
+    const interval = setInterval(fetchActiveTxns, 3000);
+    return () => clearInterval(interval);
+  }, [connectors]);
+
+  const formatDuration = (start: string | Date) => {
+    if (!start) return '00:00:00';
+    const diff = now - new Date(start).getTime();
+    if (diff < 0) return '00:00:00';
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   if (!connectors || connectors.length === 0) {
     return (
@@ -84,7 +136,8 @@ export function ConnectorList({ connectors }: ConnectorListProps) {
             <TableHead>Connector</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Power</TableHead>
-            <TableHead>Current</TableHead>
+            <TableHead>Energy</TableHead>
+            <TableHead>Time</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
@@ -111,8 +164,31 @@ export function ConnectorList({ connectors }: ConnectorListProps) {
                 <TableCell>
                   <Badge variant="secondary">{conn.current_type || 'N/A'}</Badge>
                 </TableCell>
-                <TableCell>{conn.max_power ? `${conn.max_power} kW` : 'N/A'}</TableCell>
-                <TableCell>{conn.max_current ? `${conn.max_current} A` : 'N/A'}</TableCell>
+                {(() => {
+                  const activeTxn = activeTxns.find(t => t.connectorName === String(conn.connector_id) || t.connectorName === conn.connector_name);
+                  const isCharging = conn.status?.toLowerCase() === 'charging' || activeTxn;
+
+                  if (isCharging && activeTxn) {
+                    const power = activeTxn.currentPower ? (activeTxn.currentPower / 1000).toFixed(2) + ' kW' : '0.00 kW';
+                    const energy = activeTxn.energyConsumed ? (activeTxn.energyConsumed / 1000).toFixed(2) + ' kWh' : '0.00 kWh';
+                    const duration = formatDuration(activeTxn.startTime || activeTxn.createdAt);
+                    return (
+                      <>
+                        <TableCell className="font-mono text-primary">{power}</TableCell>
+                        <TableCell className="font-mono text-primary">{energy}</TableCell>
+                        <TableCell className="font-mono text-muted-foreground">{duration}</TableCell>
+                      </>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <TableCell className="text-muted-foreground">N/A</TableCell>
+                      <TableCell className="text-muted-foreground">N/A</TableCell>
+                      <TableCell className="text-muted-foreground">-</TableCell>
+                    </>
+                  );
+                })()}
                 <TableCell>
                   <Badge className={getStatusColor(conn.status)}>
                     {conn.status}
@@ -121,7 +197,7 @@ export function ConnectorList({ connectors }: ConnectorListProps) {
               </TableRow>
               {expandedId === conn.connector_id && (
                 <TableRow>
-                  <TableCell colSpan={6} className="p-0 border-b-0 bg-muted/10">
+                  <TableCell colSpan={7} className="p-0 border-b-0 bg-muted/10">
                     <div className="p-4 pt-0">
                       <ChannelLogs
                         chargerId={conn.charger_id || 0}
