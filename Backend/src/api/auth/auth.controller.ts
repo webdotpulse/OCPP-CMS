@@ -5,6 +5,8 @@ import { generateToken, AuthRequest } from "../../middleware/auth.js";
 import { logger } from "../../utils/logger.js";
 import { sendEmail } from "../../utils/mailer.js";
 import crypto from "crypto";
+import speakeasy from "speakeasy";
+import qrcode from "qrcode";
 
 /**
  * POST /api/auth/register - Register new user
@@ -227,6 +229,46 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
+    // Handle 2FA
+    if (user.twoFactorEnabled) {
+      if (user.twoFactorMethod === "email") {
+        const twoFactorCode = crypto.randomInt(100000, 1000000).toString();
+        const twoFactorCodeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            twoFactorCode,
+            twoFactorCodeExpiry,
+          },
+        });
+
+        try {
+          await sendEmail(
+            user.email,
+            "Your 2FA Login Code",
+            `Your two-factor authentication code is: ${twoFactorCode}`,
+            `<p>Your two-factor authentication code is: <strong>${twoFactorCode}</strong></p><p>This code will expire in 10 minutes.</p>`
+          );
+        } catch (emailError) {
+          logger.error(`Error sending 2FA email to ${user.email}: ${emailError}`);
+          return res.status(500).json({ success: false, error: "Failed to send 2FA email" });
+        }
+      }
+
+      // Generate partial JWT token
+      const partialToken = generateToken(user.id, user.email, "partial_auth");
+
+      return res.json({
+        success: true,
+        data: {
+          requires2FA: true,
+          method: user.twoFactorMethod,
+          partialToken,
+        },
+      });
+    }
+
     // Generate JWT token
     const token = generateToken(user.id, user.email, user.role);
 
@@ -248,6 +290,258 @@ export const login = async (req: Request, res: Response) => {
       success: false,
       error: "Failed to login",
     });
+  }
+};
+
+/**
+ * POST /api/auth/verify-2fa-login - Verify 2FA code during login
+ */
+import jwt from "jsonwebtoken";
+import { config } from "../../config/index.js";
+
+export const verify2FALogin = async (req: Request, res: Response) => {
+  try {
+    const { partialToken, code } = req.body;
+
+    if (!partialToken || !code) {
+      return res.status(400).json({ success: false, error: "Partial token and code are required" });
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(partialToken, config.jwtSecret);
+    } catch (err) {
+      return res.status(401).json({ success: false, error: "Invalid or expired partial token" });
+    }
+
+    if (decoded.role !== "partial_auth") {
+      return res.status(401).json({ success: false, error: "Invalid token type" });
+    }
+
+    const userId = decoded.userId;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user || !user.twoFactorEnabled) {
+      return res.status(400).json({ success: false, error: "Invalid user or 2FA not enabled" });
+    }
+
+    let isValid = false;
+
+    if (user.twoFactorMethod === "authenticator" && user.twoFactorSecret) {
+      isValid = speakeasy.totp.verify({
+        secret: user.twoFactorSecret,
+        encoding: "base32",
+        token: code,
+        window: 1, // Allow 1 step (30 seconds) before or after
+      });
+    } else if (user.twoFactorMethod === "email") {
+      if (user.twoFactorCode === code && user.twoFactorCodeExpiry && user.twoFactorCodeExpiry > new Date()) {
+        isValid = true;
+        // Clear the code after successful use
+        await prisma.user.update({
+          where: { id: userId },
+          data: { twoFactorCode: null, twoFactorCodeExpiry: null },
+        });
+      }
+    }
+
+    if (!isValid) {
+      return res.status(401).json({ success: false, error: "Invalid or expired 2FA code" });
+    }
+
+    // Generate JWT token
+    const token = generateToken(user.id, user.email, user.role);
+
+    logger.info(`User logged in via 2FA: ${user.email}`);
+    res.json({
+      success: true,
+      data: {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error(`Error verifying 2FA login: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to verify 2FA code" });
+  }
+};
+
+/**
+ * GET /api/auth/2fa/generate - Generate a 2FA secret and QR code
+ */
+export const generate2FASecret = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    const secret = speakeasy.generateSecret({
+      name: `OCPP CMS (${user.email})`,
+    });
+
+    const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url || "");
+
+    res.json({
+      success: true,
+      data: {
+        secret: secret.base32,
+        qrCodeUrl,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error generating 2FA secret: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to generate 2FA secret" });
+  }
+};
+
+/**
+ * POST /api/auth/2fa/enable - Enable 2FA for the user
+ */
+export const enable2FA = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    const { method, secret, code } = req.body;
+
+    if (!method || !code) {
+      return res.status(400).json({ success: false, error: "Method and code are required" });
+    }
+
+    if (method !== "authenticator" && method !== "email") {
+      return res.status(400).json({ success: false, error: "Invalid 2FA method" });
+    }
+
+    if (method === "authenticator" && !secret) {
+      return res.status(400).json({ success: false, error: "Secret is required for authenticator method" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    let isValid = false;
+
+    if (method === "authenticator") {
+      isValid = speakeasy.totp.verify({
+        secret: secret,
+        encoding: "base32",
+        token: code,
+        window: 1,
+      });
+    } else if (method === "email") {
+      if (user.twoFactorCode === code && user.twoFactorCodeExpiry && user.twoFactorCodeExpiry > new Date()) {
+        isValid = true;
+      }
+    }
+
+    if (!isValid) {
+      return res.status(400).json({ success: false, error: "Invalid 2FA code" });
+    }
+
+    // Enable 2FA
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        twoFactorEnabled: true,
+        twoFactorMethod: method,
+        twoFactorSecret: method === "authenticator" ? secret : null,
+        twoFactorCode: null,
+        twoFactorCodeExpiry: null,
+      },
+    });
+
+    res.json({ success: true, message: "2FA successfully enabled" });
+  } catch (error) {
+    logger.error(`Error enabling 2FA: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to enable 2FA" });
+  }
+};
+
+/**
+ * POST /api/auth/2fa/disable - Disable 2FA for the user
+ */
+export const disable2FA = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        twoFactorEnabled: false,
+        twoFactorMethod: null,
+        twoFactorSecret: null,
+        twoFactorCode: null,
+        twoFactorCodeExpiry: null,
+      },
+    });
+
+    res.json({ success: true, message: "2FA successfully disabled" });
+  } catch (error) {
+    logger.error(`Error disabling 2FA: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to disable 2FA" });
+  }
+};
+
+/**
+ * POST /api/auth/2fa/send-email-code - Send 2FA setup code via email
+ */
+export const send2FAEmailCode = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    const twoFactorCode = crypto.randomInt(100000, 1000000).toString();
+    const twoFactorCodeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        twoFactorCode,
+        twoFactorCodeExpiry,
+      },
+    });
+
+    try {
+      await sendEmail(
+        user.email,
+        "Your 2FA Setup Code",
+        `Your two-factor authentication setup code is: ${twoFactorCode}`,
+        `<p>Your two-factor authentication setup code is: <strong>${twoFactorCode}</strong></p><p>This code will expire in 10 minutes.</p>`
+      );
+    } catch (emailError) {
+      logger.error(`Error sending 2FA setup email to ${user.email}: ${emailError}`);
+      return res.status(500).json({ success: false, error: "Failed to send 2FA setup email" });
+    }
+
+    res.json({ success: true, message: "2FA setup code sent to email" });
+  } catch (error) {
+    logger.error(`Error sending 2FA email code: ${error}`);
+    res.status(500).json({ success: false, error: "Failed to process 2FA email code request" });
   }
 };
 
