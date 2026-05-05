@@ -27,6 +27,12 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // 2FA state
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [twoFactorMethod, setTwoFactorMethod] = useState<string | null>(null);
+  const [partialToken, setPartialToken] = useState<string | null>(null);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
@@ -36,8 +42,16 @@ export function LoginForm() {
     setError(null);
     try {
       const response = await api.post('/auth/login', data);
-      const { token, user } = response.data;
-      login(token, user);
+      const resData = response.data?.data || response.data;
+
+      if (resData.requires2FA) {
+        setRequires2FA(true);
+        setTwoFactorMethod(resData.method);
+        setPartialToken(resData.partialToken);
+      } else {
+        const { token, user } = resData;
+        login(token, user);
+      }
     } catch (err: any) {
       logger.error('Login error', err);
       setError(err.response?.data?.error || 'Invalid email or password');
@@ -45,6 +59,69 @@ export function LoginForm() {
       setIsLoading(false);
     }
   };
+
+  const onVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.post('/auth/verify-2fa-login', { partialToken, code: twoFactorCode });
+      const resData = response.data?.data || response.data;
+      const { token, user } = resData;
+      login(token, user);
+    } catch (err: any) {
+      logger.error('2FA Verification error', err);
+      setError(err.response?.data?.error || 'Invalid 2FA code');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (requires2FA) {
+    return (
+      <Card className="w-full max-w-md shadow-sm">
+        <CardHeader className="space-y-1 border-b pb-4">
+          <CardTitle className="text-2xl font-bold tracking-tight">Two-Factor Authentication</CardTitle>
+          <CardDescription>
+            {twoFactorMethod === 'email'
+              ? "We've sent a code to your email. Please enter it below."
+              : "Please enter the code from your Authenticator app."}
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={onVerify2FA}>
+          <CardContent className="space-y-5 pt-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="code">Verification Code</Label>
+              <Input
+                id="code"
+                type="text"
+                placeholder="123456"
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value)}
+                maxLength={6}
+                required
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-3 border-t pt-4">
+            <Button type="submit" className="w-full" disabled={isLoading || twoFactorCode.length < 6}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Verify
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => setRequires2FA(false)} className="w-full">
+              Back to Login
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-md shadow-sm">
@@ -55,7 +132,7 @@ export function LoginForm() {
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-5 pt-4">
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />

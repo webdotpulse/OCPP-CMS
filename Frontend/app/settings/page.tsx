@@ -12,9 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
-import { Loader2, User, KeyRound } from "lucide-react";
+import { Loader2, User, KeyRound, ShieldAlert, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -43,6 +45,16 @@ export default function SettingsPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [createdAt, setCreatedAt] = useState<string | null>(null);
+
+  // 2FA states
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [twoFactorMethod, setTwoFactorMethod] = useState<string | null>(null);
+  const [isSettingUp2FA, setIsSettingUp2FA] = useState(false);
+  const [setupMethod, setSetupMethod] = useState<string | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [setupSecret, setSetupSecret] = useState<string | null>(null);
+  const [setupCode, setSetupCode] = useState("");
+  const [is2FALoading, setIs2FALoading] = useState(false);
 
   const profileForm = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
@@ -80,6 +92,8 @@ export default function SettingsPage() {
           if (fetchedUser?.createdAt) {
             setCreatedAt(fetchedUser.createdAt);
           }
+          setTwoFactorEnabled(fetchedUser?.twoFactorEnabled || false);
+          setTwoFactorMethod(fetchedUser?.twoFactorMethod || null);
         })
         .catch(err => {
           logger.error("Failed to fetch full user profile for settings", err);
@@ -121,6 +135,65 @@ export default function SettingsPage() {
       toast.error("Failed to update password.");
     } finally {
       setIsSavingPassword(false);
+    }
+  };
+
+  const start2FASetup = async (method: string) => {
+    setSetupMethod(method);
+    setIs2FALoading(true);
+    try {
+      if (method === 'authenticator') {
+        const res = await api.get('/auth/2fa/generate');
+        setQrCodeUrl(res.data.data.qrCodeUrl);
+        setSetupSecret(res.data.data.secret);
+      } else if (method === 'email') {
+        await api.post('/auth/2fa/send-email-code');
+        toast.success('Setup code sent to your email.');
+      }
+      setIsSettingUp2FA(true);
+    } catch (error) {
+      logger.error('Failed to start 2FA setup', error);
+      toast.error('Failed to start 2FA setup.');
+      setSetupMethod(null);
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
+
+  const confirm2FASetup = async () => {
+    setIs2FALoading(true);
+    try {
+      await api.post('/auth/2fa/enable', {
+        method: setupMethod,
+        secret: setupSecret,
+        code: setupCode
+      });
+      setTwoFactorEnabled(true);
+      setTwoFactorMethod(setupMethod);
+      setIsSettingUp2FA(false);
+      setSetupCode("");
+      toast.success('Two-factor authentication enabled successfully!');
+    } catch (error: any) {
+      logger.error('Failed to enable 2FA', error);
+      toast.error(error.response?.data?.error || 'Failed to verify code.');
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
+
+  const disable2FA = async () => {
+    setIs2FALoading(true);
+    try {
+      await api.post('/auth/2fa/disable');
+      setTwoFactorEnabled(false);
+      setTwoFactorMethod(null);
+      setIsSettingUp2FA(false);
+      toast.success('Two-factor authentication disabled.');
+    } catch (error) {
+      logger.error('Failed to disable 2FA', error);
+      toast.error('Failed to disable 2FA.');
+    } finally {
+      setIs2FALoading(false);
     }
   };
 
@@ -234,8 +307,9 @@ export default function SettingsPage() {
           </form>
         </Card>
 
-        {/* Security Settings */}
-        <Card className="shadow-sm">
+        <div className="space-y-8">
+          {/* Security Settings */}
+          <Card className="shadow-sm">
           <CardHeader className="border-b pb-4">
             <CardTitle className="flex items-center gap-2">
               <KeyRound className="h-5 w-5" /> Security
@@ -276,6 +350,86 @@ export default function SettingsPage() {
             </CardFooter>
           </form>
         </Card>
+
+        {/* 2FA Settings */}
+        <Card className="shadow-sm">
+          <CardHeader className="border-b pb-4">
+            <CardTitle className="flex items-center gap-2">
+              {twoFactorEnabled ? <ShieldCheck className="h-5 w-5 text-green-500" /> : <ShieldAlert className="h-5 w-5 text-amber-500" />}
+              Two-Factor Authentication
+            </CardTitle>
+            <CardDescription>
+              Add an extra layer of security to your account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5 pt-4">
+            {!twoFactorEnabled && !isSettingUp2FA && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">Choose a method to set up 2FA:</p>
+                <div className="flex gap-4">
+                  <Button variant="outline" onClick={() => start2FASetup('authenticator')} disabled={is2FALoading}>
+                    {is2FALoading && setupMethod === 'authenticator' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Authenticator App
+                  </Button>
+                  <Button variant="outline" onClick={() => start2FASetup('email')} disabled={is2FALoading}>
+                    {is2FALoading && setupMethod === 'email' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Email Codes
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {isSettingUp2FA && (
+              <div className="space-y-4">
+                {setupMethod === 'authenticator' && qrCodeUrl && (
+                  <div className="flex flex-col items-center gap-2 p-4 border rounded-md bg-white">
+                    <p className="text-sm text-gray-800 font-medium">Scan this QR code with your Authenticator app</p>
+                    <Image src={qrCodeUrl} alt="2FA QR Code" width={200} height={200} />
+                  </div>
+                )}
+                {setupMethod === 'email' && (
+                  <Alert>
+                    <AlertDescription>We have sent a verification code to your email.</AlertDescription>
+                  </Alert>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="setupCode">Verification Code</Label>
+                  <Input
+                    id="setupCode"
+                    value={setupCode}
+                    onChange={(e) => setSetupCode(e.target.value)}
+                    placeholder="123456"
+                    maxLength={6}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={confirm2FASetup} disabled={is2FALoading || setupCode.length < 6}>
+                    {is2FALoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Verify & Enable
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setIsSettingUp2FA(false); setSetupMethod(null); }} disabled={is2FALoading}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {twoFactorEnabled && (
+              <div className="space-y-4">
+                <Alert className="bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400">
+                  <AlertDescription>
+                    2FA is currently enabled via <strong>{twoFactorMethod === 'authenticator' ? 'Authenticator App' : 'Email'}</strong>.
+                  </AlertDescription>
+                </Alert>
+                <Button variant="destructive" onClick={disable2FA} disabled={is2FALoading}>
+                  {is2FALoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Disable 2FA
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        </div>
       </div>
     </AppShell>
   );

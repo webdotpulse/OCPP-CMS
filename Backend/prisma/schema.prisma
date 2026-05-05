@@ -11,20 +11,25 @@ datasource db {
 
 // Admin user accounts
 model User {
-  id          Int      @id @default(autoincrement())
-  name        String?
-  email       String   @unique
-  password    String
-  role        String   @default("admin")
-  userType    String   @default("private")
-  companyName String?
-  address     String?
-  phone       String?
-  taxNumber   String?
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id               Int       @id @default(autoincrement())
+  name             String?
+  email            String    @unique
+  password         String
+  role             String    @default("admin")
+  userType         String    @default("private")
+  companyName      String?
+  address          String?
+  phone            String?
+  taxNumber        String?
+  resetToken          String?
+  resetTokenExpiry    DateTime?
+  twoFactorEnabled    Boolean   @default(false)
+  twoFactorMethod     String?
+  twoFactorSecret     String?
+  twoFactorCode       String?
+  twoFactorCodeExpiry DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   chargingStations ChargingStation[]
   chargers         Charger[]
