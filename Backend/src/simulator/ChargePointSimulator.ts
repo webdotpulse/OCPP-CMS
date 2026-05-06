@@ -8,7 +8,7 @@ export interface SimulatorConfig {
   type: "AC" | "DC";
   maxPowerKw: number;
   rfidTags?: string;
-  chargeProfile?: "SetSpeed" | "DynamicSpeed" | "RealLife1" | "RealLife2";
+  chargeProfile?: "SetSpeed" | "DynamicSpeed" | "RealLife1" | "RealLife2" | "RealLifeDC1" | "RealLifeDC2";
 }
 
 export type SimulatorState = "Offline" | "Available" | "Preparing" | "Charging" | "Finishing";
@@ -133,11 +133,21 @@ export class ChargePointSimulator {
 
   public async sendBootNotification() {
     try {
-      await this.client.call("BootNotification", {
-        chargePointVendor: "SimVendor",
-        chargePointModel: `SimModel-${this.config.type}`,
-        firmwareVersion: "1.0.0",
-      });
+      if (this.config.protocol === "ocpp2.1") {
+        await this.client.call("BootNotification", {
+          chargingStation: {
+            vendorName: "SimVendor",
+            model: `SimModel-${this.config.type}`
+          },
+          reason: "PowerUp"
+        });
+      } else {
+        await this.client.call("BootNotification", {
+          chargePointVendor: "SimVendor",
+          chargePointModel: `SimModel-${this.config.type}`,
+          firmwareVersion: "1.0.0",
+        });
+      }
       await this.sendStatusNotification("Available");
     } catch (err) {
       logger.error(`Simulator ${this.config.chargerId} BootNotification failed`, err);
@@ -146,11 +156,20 @@ export class ChargePointSimulator {
 
   public async sendStatusNotification(status: string) {
     try {
-      await this.client.call("StatusNotification", {
-        connectorId: 1,
-        errorCode: "NoError",
-        status: status,
-      });
+      if (this.config.protocol === "ocpp2.1") {
+        await this.client.call("StatusNotification", {
+          evseId: 1,
+          connectorId: 1,
+          connectorStatus: status,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        await this.client.call("StatusNotification", {
+          connectorId: 1,
+          errorCode: "NoError",
+          status: status,
+        });
+      }
       if (status === "Available") this.state = "Available";
       else if (status === "Preparing") this.state = "Preparing";
       else if (status === "Charging") this.state = "Charging";
@@ -166,21 +185,44 @@ export class ChargePointSimulator {
     await this.sendStatusNotification("Preparing");
 
     try {
-      const authRes: any = await this.client.call("Authorize", { idTag });
-      if (authRes.idTagInfo?.status !== "Accepted") {
+      const authPayload = this.config.protocol === "ocpp2.1" ? { idToken: { idToken: idTag, type: "ISO14443" } } : { idTag };
+      const authRes: any = await this.client.call("Authorize", authPayload);
+      const isAccepted = this.config.protocol === "ocpp2.1" ? authRes.idTokenInfo?.status === "Accepted" : authRes.idTagInfo?.status === "Accepted";
+      if (!isAccepted) {
         logger.warn(`Simulator ${this.config.chargerId} Auth denied for ${idTag}`);
         await this.sendStatusNotification("Available");
         return;
       }
 
-      const startRes: any = await this.client.call("StartTransaction", {
-        connectorId: 1,
-        idTag,
-        meterStart: this.energyConsumedWh,
-        timestamp: new Date().toISOString(),
-      });
+      let startRes: any;
+      const ts = new Date().toISOString();
+      if (this.config.protocol === "ocpp2.1") {
+        const randTxId = Math.floor(Math.random() * 1000000).toString();
+        startRes = await this.client.call("TransactionEvent", {
+          eventType: "Started",
+          timestamp: ts,
+          triggerReason: "Authorized",
+          seqNo: 1,
+          transactionInfo: { transactionId: randTxId },
+          idToken: { idToken: idTag, type: "ISO14443" },
+          evse: { id: 1 },
+          meterValue: [{
+            timestamp: ts,
+            sampledValue: [{ value: Math.floor(this.energyConsumedWh).toString() }]
+          }]
+        });
+        // OCPP 2.1 might not return transactionId in result if we generate it
+        this.currentTransactionId = parseInt(randTxId, 10);
+      } else {
+        startRes = await this.client.call("StartTransaction", {
+          connectorId: 1,
+          idTag,
+          meterStart: Math.floor(this.energyConsumedWh),
+          timestamp: ts,
+        });
+        this.currentTransactionId = startRes.transactionId;
+      }
 
-      this.currentTransactionId = startRes.transactionId;
       this.sessionStartTime = Date.now();
       await this.sendStatusNotification("Charging");
     } catch (err) {
@@ -195,11 +237,26 @@ export class ChargePointSimulator {
     await this.sendStatusNotification("Finishing");
 
     try {
-      await this.client.call("StopTransaction", {
-        transactionId: this.currentTransactionId,
-        meterStop: Math.floor(this.energyConsumedWh),
-        timestamp: new Date().toISOString(),
-      });
+      const ts = new Date().toISOString();
+      if (this.config.protocol === "ocpp2.1") {
+        await this.client.call("TransactionEvent", {
+          eventType: "Ended",
+          timestamp: ts,
+          triggerReason: "StopAuthorized",
+          seqNo: 9999,
+          transactionInfo: { transactionId: this.currentTransactionId.toString() },
+          meterValue: [{
+            timestamp: ts,
+            sampledValue: [{ value: Math.floor(this.energyConsumedWh).toString() }]
+          }]
+        });
+      } else {
+        await this.client.call("StopTransaction", {
+          transactionId: this.currentTransactionId,
+          meterStop: Math.floor(this.energyConsumedWh),
+          timestamp: ts,
+        });
+      }
 
       this.currentTransactionId = null;
       await this.sendStatusNotification("Available");
@@ -242,38 +299,80 @@ export class ChargePointSimulator {
           currentPowerW = maxW * (0.4 + Math.random() * 0.6); // Fluctuate 40-100%
         }
         break;
+      case "RealLifeDC1":
+        // Fast charge curve: starts high, sustains 30s, tapers to 20% over next 90s
+        if (sessionDurationSeconds <= 30) {
+          currentPowerW = maxW * (0.95 + Math.random() * 0.05);
+        } else if (sessionDurationSeconds <= 120) {
+          let taperDCRatio = 1 - (0.8 * ((sessionDurationSeconds - 30) / 90));
+          currentPowerW = maxW * taperDCRatio * (0.95 + Math.random() * 0.05);
+        } else {
+          currentPowerW = maxW * 0.2 * (0.95 + Math.random() * 0.05);
+        }
+        break;
+      case "RealLifeDC2":
+        // Gradual step-down curve
+        if (sessionDurationSeconds <= 30) {
+          currentPowerW = maxW * (0.95 + Math.random() * 0.05);
+        } else if (sessionDurationSeconds <= 60) {
+          currentPowerW = maxW * 0.8 * (0.95 + Math.random() * 0.05);
+        } else if (sessionDurationSeconds <= 90) {
+          currentPowerW = maxW * 0.6 * (0.95 + Math.random() * 0.05);
+        } else if (sessionDurationSeconds <= 120) {
+          currentPowerW = maxW * 0.4 * (0.95 + Math.random() * 0.05);
+        } else {
+          currentPowerW = maxW * 0.2 * (0.95 + Math.random() * 0.05);
+        }
+        break;
       default:
         // Default behavior (same as DynamicSpeed)
         currentPowerW = maxW * (0.8 + Math.random() * 0.2);
     }
 
+    // Ensure power is between 20kW and 100kW
+    currentPowerW = Math.max(20000, Math.min(100000, currentPowerW));
+
     // Add energy for 10 seconds interval (W * h)
     this.energyConsumedWh += currentPowerW * (10 / 3600);
 
     try {
-      await this.client.call("MeterValues", {
-        connectorId: 1,
-        transactionId: this.currentTransactionId,
-        meterValue: [
-          {
-            timestamp: new Date().toISOString(),
-            sampledValue: [
-              {
-                value: Math.floor(this.energyConsumedWh).toString(),
-                context: "Sample.Periodic",
-                measurand: "Energy.Active.Import.Register",
-                unit: "Wh"
-              },
-              {
-                value: Math.floor(currentPowerW).toString(),
-                context: "Sample.Periodic",
-                measurand: "Power.Active.Import",
-                unit: "W"
-              }
-            ]
-          }
-        ]
-      });
+      const ts = new Date().toISOString();
+      const meterPayload = [
+        {
+          timestamp: ts,
+          sampledValue: [
+            {
+              value: Math.floor(this.energyConsumedWh).toString(),
+              context: "Sample.Periodic",
+              measurand: "Energy.Active.Import.Register",
+              unit: "Wh"
+            },
+            {
+              value: Math.floor(currentPowerW).toString(),
+              context: "Sample.Periodic",
+              measurand: "Power.Active.Import",
+              unit: "W"
+            }
+          ]
+        }
+      ];
+
+      if (this.config.protocol === "ocpp2.1") {
+        await this.client.call("TransactionEvent", {
+          eventType: "Updated",
+          timestamp: ts,
+          triggerReason: "MeterValuePeriodic",
+          seqNo: Math.floor(Date.now() / 1000) % 10000,
+          transactionInfo: { transactionId: this.currentTransactionId.toString() },
+          meterValue: meterPayload
+        });
+      } else {
+        await this.client.call("MeterValues", {
+          connectorId: 1,
+          transactionId: this.currentTransactionId,
+          meterValue: meterPayload
+        });
+      }
     } catch (err) {
       logger.error(`Simulator ${this.config.chargerId} MeterValues failed`, err);
     }

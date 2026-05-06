@@ -134,6 +134,8 @@ export default function SimulatorPage() {
                     <SelectItem value="DynamicSpeed">Dynamic Speed</SelectItem>
                     <SelectItem value="RealLife1">Real Life 1</SelectItem>
                     <SelectItem value="RealLife2">Real Life 2</SelectItem>
+                    <SelectItem value="RealLifeDC1">Real Life DC 1</SelectItem>
+                    <SelectItem value="RealLifeDC2">Real Life DC 2</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -6,7 +6,7 @@ export interface SimulatorConfig {
   type: "AC" | "DC";
   maxPowerKw: number;
   rfidTags?: string;
-  chargeProfile?: "SetSpeed" | "DynamicSpeed" | "RealLife1" | "RealLife2";
+  chargeProfile?: "SetSpeed" | "DynamicSpeed" | "RealLife1" | "RealLife2" | "RealLifeDC1" | "RealLifeDC2";
 }
 
 export const simulatorApi = {
