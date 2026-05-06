@@ -10,6 +10,7 @@
       "transactions": "Transacties",
       "tariffs": "Tarieven",
       "roaming": "Roaming",
+      "simulator": "Simulator",
       "settings": "Instellingen",
       "ocppConsole": "OCPP Console"
     },
