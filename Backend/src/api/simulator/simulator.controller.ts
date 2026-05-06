@@ -21,6 +21,10 @@ export async function spawnSimulator(req: Request, res: Response) {
       return res.status(400).json({ success: false, error: "Missing required config parameters" });
     }
 
+    if (config.maxPowerKw < 20 || config.maxPowerKw > 100) {
+      return res.status(400).json({ success: false, error: "Simulator max power must be between 20kW and 100kW" });
+    }
+
     // Attempt to auto-create station, charger, and connector in the DB if they don't exist
     try {
       const existing = await prisma.charger.findUnique({ where: { name: config.chargerId } });
