@@ -52,6 +52,7 @@
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^8.0.7",
     "ocpp-rpc": "^2.2.1",
+    "ocpp-ws-io": "^2.2.1",
     "pg": "^8.20.0",
     "qrcode": "^1.5.4",
     "rate-limit-redis": "^4.3.1",
