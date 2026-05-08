@@ -5,9 +5,7 @@ Based on an analysis of the codebase, here is an overview of performance issues,
 ## 1. Things to be Fixed (Bugs & Linting)
 
 ### Missing Database Indexes
-**Problem:** The `schema.prisma` defines several relations and heavily queried fields (e.g., `transactionId`, `charger_id`, `status` on `Transaction` and `MeterValue`), but lacks explicit `@@index` definitions which can cause performance bottlenecks when tables grow large.
-**Prompt:**
-> "Please add performance indexes to the Prisma schema (`Backend/prisma/schema.prisma`). Specifically, add `@@index` for `charger_id` and `status` in the `Transaction` model, `transactionId` and `chargerId` in the `MeterValue` model, and `charger_id` in the `OcppLog` model. After updating, run `npm run prisma:generate` in the Backend."
+**Status:** ✅ Completed
 
 ### Error Handling in Background Workers
 **Problem:** `MeterValueService.ts` catches errors during Redis stream processing but doesn't implement a robust retry mechanism or a dead-letter queue (DLQ) for payloads that repeatedly fail Prisma insertion.

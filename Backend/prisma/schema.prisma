@@ -178,6 +178,9 @@ model Transaction {
   idTag             String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  @@index([charger_id])
+  @@index([status])
 }
 
 // OCPP message logging for debugging
@@ -189,6 +192,8 @@ model OcppLog {
   timestamp     DateTime @default(now())
   direction     String
   message       String
+
+  @@index([chargerId])
 }
 
 // Optional: Tariff for pricing
@@ -342,4 +347,7 @@ model MeterValue {
   timestamp     DateTime @default(now())
 
   charger Charger @relation(fields: [chargerId], references: [charger_id], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@index([chargerId])
 }
