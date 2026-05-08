@@ -291,8 +291,3 @@ ws://<your-host>:9220/OCPP/[1.6|2.1]/<charger-id>
 ```
 
 > **Note:** `<charger-id>` must match the `charger_id` of a charger registered in the system (via the dashboard or database seeding).
-
-### Testing with a Simulator
-You can use any OCPP 1.6 & 2.1/2.0.1 simulator such as:
-- [OCPP Simulator (Web)](https://github.com/nickvdyck/webboss-ocpp) 
-- [SteVe Test Client](https://github.com/steve-community/steve)
