@@ -7,44 +7,38 @@
    - Network:      http://192.168.0.2:3002
 
  ✓ Starting...
- ✓ Compiled middleware in 349ms
- ✓ Ready in 1971ms
+ ✓ Compiled middleware in 338ms
+ ✓ Ready in 1954ms
  ○ Compiling / ...
- ✓ Compiled / in 8s
- GET / 307 in 9285ms
- ○ Compiling /dashboard ...
- ✓ Compiled /dashboard in 6.3s
- GET /dashboard 200 in 7030ms
-Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=mego7hv7 [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/dashboard/overview [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/stations [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/dashboard/distribution [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/dashboard/live-sessions [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
- ○ Compiling /chargers/[id] ...
-Failed to proxy http://localhost:3000/api/dashboard/overview [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/stations [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/dashboard/distribution [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/dashboard/live-sessions [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=mehwrqmz [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=mej8iij2 [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
- GET /chargers/1 200 in 5549ms
- ✓ Compiled /chargers/[id] in 5.8s
-Failed to proxy http://localhost:3000/api/chargers/1 [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/config-profiles [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=melbjfyd [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
-Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=mem2pxnl [AggregateError: ] { code: 'ECONNREFUSED' }
-[AggregateError: ] { code: 'ECONNREFUSED' }
+ ✓ Compiled / in 7.9s
+ GET / 307 in 9260ms
+ ○ Compiling /chargers/unrecognized ...
+ ✓ Compiled /chargers/unrecognized in 2.6s
+ GET /chargers/unrecognized 200 in 3161ms
+ ○ Compiling /login ...
+ GET /chargers/unrecognized 200 in 369ms
+ ✓ Compiled /login in 3s
+Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=qb8v4wmg [Error: socket hang up] { code: 'ECONNRESET' }
+[Error: socket hang up] { code: 'ECONNRESET' }
+Failed to proxy http://localhost:3000/api/chargers/unrecognized [Error: socket hang up] { code: 'ECONNRESET' }
+[Error: socket hang up] { code: 'ECONNRESET' }
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 3.4s
+ GET /chargers/unrecognized 200 in 291ms
+ GET /login 200 in 197ms
+ GET /chargers/unrecognized 200 in 227ms
+ GET /login 200 in 189ms
+ GET /chargers/unrecognized 200 in 220ms
+ GET /login 200 in 199ms
+ GET /chargers/unrecognized 200 in 262ms
+ GET /login 200 in 189ms
+ GET /chargers/unrecognized 200 in 272ms
+ GET /login 200 in 178ms
+ GET /chargers/unrecognized 200 in 263ms
+ GET /login 200 in 210ms
+ GET /chargers/unrecognized 200 in 336ms
+ GET /login 200 in 190ms
+ GET /chargers/unrecognized 200 in 239ms
+ GET /login 200 in 204ms
+ GET /chargers/unrecognized 200 in 208ms
+[?25h

@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getAllChargers,
   getUnrecognizedConnections,
+  deleteUnrecognizedConnections,
   getChargerById,
   getChargerStatus,
   createCharger,
@@ -16,6 +17,7 @@ const router = Router();
 
 router.get("/", getAllChargers);
 router.get("/unrecognized", getUnrecognizedConnections);
+router.delete("/unrecognized", deleteUnrecognizedConnections);
 router.get("/:id", getChargerById);
 router.get("/:id/status", getChargerStatus);
 router.get("/:id/logs", getChargerLogs);

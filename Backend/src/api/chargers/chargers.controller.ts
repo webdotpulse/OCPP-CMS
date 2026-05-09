@@ -35,6 +35,24 @@ export const getUnrecognizedConnections = async (req: Request, res: Response) =>
 };
 
 /**
+ * DELETE /api/chargers/unrecognized - Clear all unrecognized connections
+ */
+export const deleteUnrecognizedConnections = async (req: Request, res: Response) => {
+  try {
+    const deleted = await prisma.unrecognizedConnection.deleteMany({});
+
+    logger.info(`Cleared ${deleted.count} unrecognized connections`);
+    res.json({ success: true, message: "Unrecognized connections cleared", count: deleted.count });
+  } catch (error) {
+    logger.error(`Error deleting unrecognized connections: ${error}`);
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete unrecognized connections",
+    });
+  }
+};
+
+/**
  * GET /api/chargers/:id/logs - Get charger logs
  */
 export const getChargerLogs = async (req: Request, res: Response) => {

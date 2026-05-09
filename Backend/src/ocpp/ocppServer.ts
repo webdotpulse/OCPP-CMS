@@ -116,7 +116,11 @@ class OcppServer {
       chargerRegistry.register(chargerId, charger.name, ws);
 
       if (charger.thirdPartyBackendUrl) {
-        proxyRouter.setupProxy(chargerId, charger.thirdPartyBackendUrl, ws.protocol);
+        let thirdPartyUrl = charger.thirdPartyBackendUrl;
+        if (thirdPartyUrl && !thirdPartyUrl.endsWith(charger.name)) {
+            thirdPartyUrl = thirdPartyUrl.endsWith('/') ? thirdPartyUrl + charger.name : thirdPartyUrl + '/' + charger.name;
+        }
+        proxyRouter.setupProxy(chargerId, thirdPartyUrl, ws.protocol);
       }
 
       ws.on("message", async (data: Buffer) => {

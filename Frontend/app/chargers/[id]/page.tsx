@@ -39,6 +39,7 @@ interface ChargerDetail {
     state: string;
   };
   connectors: any[];
+  thirdPartyBackendUrl?: string | null;
 }
 
 export default function ChargerDetailPage() {
@@ -201,6 +202,17 @@ export default function ChargerDetailPage() {
                     </p>
                   </div>
                 </div>
+                {charger.thirdPartyBackendUrl && (
+                  <div className="flex gap-3">
+                    <Info className="h-4 w-4 text-blue-500 mt-1" />
+                    <div className="overflow-hidden">
+                      <p className="font-medium text-sm">Third-Party Backend URL</p>
+                      <p className="text-xs text-muted-foreground truncate" title={charger.thirdPartyBackendUrl}>
+                        {charger.thirdPartyBackendUrl}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
