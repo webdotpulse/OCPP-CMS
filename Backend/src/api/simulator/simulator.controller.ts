@@ -52,6 +52,7 @@ export async function spawnSimulatorGroup(req: Request, res: Response) {
             }
           });
         }
+
         let chargeGroup = await prisma.chargeGroup.findFirst({
           where: { name: "The Matrix Battery" }
         });
@@ -62,6 +63,24 @@ export async function spawnSimulatorGroup(req: Request, res: Response) {
               description: "Auto-generated charge group for simulators",
               maxAmperage: 100,
               maxPower: 100
+            }
+          });
+        }
+
+        // Ensure user is in the charge group to allow authorization
+        const userInGroup = await prisma.chargeGroupUser.findUnique({
+          where: {
+            chargeGroupId_userId: {
+              chargeGroupId: chargeGroup.id,
+              userId: user.id
+            }
+          }
+        });
+        if (!userInGroup) {
+          await prisma.chargeGroupUser.create({
+            data: {
+              chargeGroupId: chargeGroup.id,
+              userId: user.id
             }
           });
         }
