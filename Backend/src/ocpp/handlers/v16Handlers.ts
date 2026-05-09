@@ -391,17 +391,17 @@ export async function handleMeterValues(
   try {
     if (!transactionId) return;
 
-    let energyValue = 0;
-    let powerValue = 0;
-    let socValue: number | null = null;
-    let currentValue: number | null = null;
-    let voltageValue: number | null = null;
-
-    // Extract a timestamp from the meter value if available, or use current time
-    let timestamp = new Date();
-
     if (Array.isArray(meterValue)) {
       for (const mv of meterValue) {
+        let energyValue = 0;
+        let powerValue = 0;
+        let socValue: number | null = null;
+        let currentValue: number | null = null;
+        let voltageValue: number | null = null;
+
+        // Extract a timestamp from the meter value if available, or use current time
+        let timestamp = new Date();
+
         if (mv.timestamp) {
           timestamp = new Date(mv.timestamp);
         }
@@ -423,21 +423,21 @@ export async function handleMeterValues(
         } else if (mv.value !== undefined) {
            energyValue = parseFloat(mv.value);
         }
+
+        // Push meter value to background batch processor queue
+        await MeterValueService.addMeterValue({
+          transactionId: String(transactionId),
+          chargerId,
+          connectorId,
+          energyValue,
+          powerValue,
+          socValue,
+          currentValue,
+          voltageValue,
+          timestamp,
+        });
       }
     }
-
-    // Push meter value to background batch processor queue
-    await MeterValueService.addMeterValue({
-      transactionId: String(transactionId),
-      chargerId,
-      connectorId,
-      energyValue,
-      powerValue,
-      socValue,
-      currentValue,
-      voltageValue,
-      timestamp,
-    });
 
     await logOcppMessage(chargerId, "in", payload, transactionId);
   } catch (error) {
