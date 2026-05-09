@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -108,6 +109,14 @@ export function ChargerTransactionsTable({ chargerId }: ChargerTransactionsTable
     return 0;
   });
 
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: sortedTransactions.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 64, // Approximate height of a row
+    overscan: 5,
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -122,9 +131,9 @@ export function ChargerTransactionsTable({ chargerId }: ChargerTransactionsTable
         </Button>
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div ref={parentRef} className="rounded-md border bg-card h-[600px] overflow-auto relative">
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 bg-card z-10 shadow-sm">
             <TableRow>
               <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('transactionId')}>
                 <div className="flex items-center gap-1">Txn ID <ArrowUpDown className="h-3 w-3" /></div>
@@ -159,37 +168,52 @@ export function ChargerTransactionsTable({ chargerId }: ChargerTransactionsTable
                 </TableCell>
               </TableRow>
             ) : (
-              sortedTransactions.map((txn) => (
-                <TableRow key={txn.id}>
-                  <TableCell className="font-mono text-sm">
-                    <div className="flex items-center gap-2">
-                      <ReceiptText className="h-4 w-4 text-muted-foreground" />
-                      #{txn.transactionId}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium text-sm">
-                      {format(new Date(txn.startTime || txn.createdAt), 'MMM d, yyyy HH:mm')}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(txn.startTime || txn.createdAt), { addSuffix: true })}
-                    </div>
-                  </TableCell>
-                  <TableCell>{txn.connectorName}</TableCell>
-                  <TableCell className="font-mono text-xs">{txn.idTag || 'N/A'}</TableCell>
-                  <TableCell className="text-right font-mono text-primary">
-                    {(txn.energyConsumed / 1000).toFixed(2)} kWh
-                  </TableCell>
-                  <TableCell>{getStatusBadge(txn.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <Link href={`/transactions/${txn.id}`}>
-                       <Button variant="ghost" size="sm">
-                         <Eye className="mr-2 h-4 w-4" /> View
-                       </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))
+              <>
+                {rowVirtualizer.getVirtualItems().length > 0 && rowVirtualizer.getVirtualItems()[0].start > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} style={{ height: `${rowVirtualizer.getVirtualItems()[0].start}px`, padding: 0 }} />
+                  </TableRow>
+                )}
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const txn = sortedTransactions[virtualRow.index];
+                  return (
+                    <TableRow key={txn.id} data-index={virtualRow.index} ref={rowVirtualizer.measureElement}>
+                      <TableCell className="font-mono text-sm">
+                        <div className="flex items-center gap-2">
+                          <ReceiptText className="h-4 w-4 text-muted-foreground" />
+                          #{txn.transactionId}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-sm">
+                          {format(new Date(txn.startTime || txn.createdAt), 'MMM d, yyyy HH:mm')}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(txn.startTime || txn.createdAt), { addSuffix: true })}
+                        </div>
+                      </TableCell>
+                      <TableCell>{txn.connectorName}</TableCell>
+                      <TableCell className="font-mono text-xs">{txn.idTag || 'N/A'}</TableCell>
+                      <TableCell className="text-right font-mono text-primary">
+                        {(txn.energyConsumed / 1000).toFixed(2)} kWh
+                      </TableCell>
+                      <TableCell>{getStatusBadge(txn.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/transactions/${txn.id}`}>
+                           <Button variant="ghost" size="sm">
+                             <Eye className="mr-2 h-4 w-4" /> View
+                           </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {rowVirtualizer.getVirtualItems().length > 0 && rowVirtualizer.getVirtualItems()[rowVirtualizer.getVirtualItems().length - 1].end < rowVirtualizer.getTotalSize() && (
+                  <TableRow>
+                    <TableCell colSpan={7} style={{ height: `${rowVirtualizer.getTotalSize() - rowVirtualizer.getVirtualItems()[rowVirtualizer.getVirtualItems().length - 1].end}px`, padding: 0 }} />
+                  </TableRow>
+                )}
+              </>
             )}
           </TableBody>
         </Table>
