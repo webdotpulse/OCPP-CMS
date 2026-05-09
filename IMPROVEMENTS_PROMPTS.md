@@ -18,16 +18,19 @@ Based on an analysis of the codebase, here is an overview of performance issues,
 ## 2. Improvements (Performance & Architecture)
 
 ### LoadManagementService Scalability
+**Status:** ✅ Completed
 **Problem:** `LoadManagementService.ts` fetches *all* active transactions into memory using `findMany` across a whole station or charge group to calculate active loads. This won't scale well with hundreds of chargers per station.
 **Prompt:**
 > "Please optimize `Backend/src/services/LoadManagementService.ts`. Instead of fetching all transaction records into memory using `prisma.transaction.findMany` to sum capacities, use Prisma's `aggregate` function (`_sum`) to calculate the total requested load (`power_capacity` or `current`) at the database level."
 
 ### MeterValue Service Stream Trimming
+**Status:** ✅ Completed
 **Problem:** `MeterValueService.ts` acknowledges messages via `XACK` but never trims the stream using `XTRIM` or `XADD ... MAXLEN`. Over time, the `meter_values_stream` in Redis will consume unbound memory.
 **Prompt:**
 > "Please update `Backend/src/services/MeterValueService.ts` to limit the size of the Redis stream. Modify the `addMeterValue` function to include a `MAXLEN` argument (e.g., `~ 100000`) when calling `XADD`, or periodically trim the stream to prevent memory leaks."
 
 ### Missing Automated Test Suite Setup
+**Status:** ✅ Completed
 **Problem:** The project lacks configured unit or integration tests (running `npm test` fails).
 **Prompt:**
 > "Please set up a basic testing framework for the Backend. Install `jest` and `ts-jest` or `vitest`, configure it to work with TypeScript, and write a basic suite of unit tests for the utility functions and `LoadManagementService` logic."
