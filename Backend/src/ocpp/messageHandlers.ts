@@ -5,6 +5,7 @@ import type { OcppDirection } from "../types/index.js";
 import { redisPublisher } from "../config/redis.js";
 import { handleOcppMessage16 } from "./handlers/v16Handlers.js";
 import { handleOcppMessage21 } from "./handlers/v21Handlers.js";
+import { validateOcppMessage } from "./validator.js";
 
 /**
  * Log OCPP message to database and broadcast live via Redis pub/sub
@@ -48,6 +49,11 @@ export async function handleOcppMessage(
 
   // Update registry heartbeat on any incoming message
   await chargerRegistry.updateHeartbeat(chargerId);
+
+  // Validate incoming requests (messageType === 2 is CALL) against JSON schemas
+  if (messageType === 2) {
+    validateOcppMessage(actionName, payload, protocol);
+  }
 
   let response: any;
 
