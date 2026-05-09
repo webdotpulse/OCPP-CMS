@@ -44,8 +44,8 @@ export async function spawnSimulator(req: Request, res: Response) {
                 street_name: "Construct",
                 city: "Zion",
                 postal_code: "10101",
-                latitude: 0,
-                longitude: 0,
+                latitude: 50.84967820466121,
+                longitude: 4.356986627577444,
                 owner_id: user.id,
               }
             });

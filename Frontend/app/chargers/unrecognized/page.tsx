@@ -25,6 +25,16 @@ export default function UnrecognizedChargersPage() {
     }
   };
 
+  const handleClearAll = async () => {
+    if (!confirm('Are you sure you want to clear all unrecognized connections?')) return;
+    try {
+      await api.delete('/chargers/unrecognized');
+      fetchConnections();
+    } catch (error) {
+      logger.error("Failed to clear unrecognized connections", error);
+    }
+  };
+
   useEffect(() => {
     fetchConnections();
   }, []);
@@ -36,11 +46,16 @@ export default function UnrecognizedChargersPage() {
           <h1 className="text-2xl font-bold tracking-tight">Unrecognized Connections</h1>
           <p className="text-muted-foreground">View and register unknown or rejected OCPP connections.</p>
         </div>
-        <Link href="/chargers">
-          <Button variant="outline">
-            Back to Chargers
+        <div className="flex gap-2">
+          <Button variant="destructive" onClick={handleClearAll} disabled={connections.length === 0}>
+            Clear All
           </Button>
-        </Link>
+          <Link href="/chargers">
+            <Button variant="outline">
+              Back to Chargers
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="rounded-md border bg-card">
