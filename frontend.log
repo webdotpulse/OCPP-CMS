@@ -1,0 +1,50 @@
+
+> Frontend@0.0.1 dev
+> next dev -p 3002 --turbopack
+
+   ▲ Next.js 15.5.15 (Turbopack)
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.0.2:3002
+
+ ✓ Starting...
+ ✓ Compiled middleware in 349ms
+ ✓ Ready in 1971ms
+ ○ Compiling / ...
+ ✓ Compiled / in 8s
+ GET / 307 in 9285ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 6.3s
+ GET /dashboard 200 in 7030ms
+Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=mego7hv7 [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/dashboard/overview [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/stations [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/dashboard/distribution [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/dashboard/live-sessions [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+ ○ Compiling /chargers/[id] ...
+Failed to proxy http://localhost:3000/api/dashboard/overview [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/stations [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/dashboard/distribution [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/dashboard/live-sessions [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=mehwrqmz [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=mej8iij2 [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+ GET /chargers/1 200 in 5549ms
+ ✓ Compiled /chargers/[id] in 5.8s
+Failed to proxy http://localhost:3000/api/chargers/1 [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/config-profiles [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=melbjfyd [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
+Failed to proxy http://localhost:3000/api/realtime?EIO=4&transport=polling&t=mem2pxnl [AggregateError: ] { code: 'ECONNREFUSED' }
+[AggregateError: ] { code: 'ECONNREFUSED' }
