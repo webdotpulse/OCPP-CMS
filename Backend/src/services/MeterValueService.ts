@@ -2,11 +2,9 @@ import { redisClient } from "../config/redis.js";
 import { prisma } from "../config/database.js";
 import { logger } from "../utils/logger.js";
 
-const STREAM_KEY = "meter_values_stream";
-const DLQ_STREAM_KEY = "meter_values_dlq";
-const GROUP_NAME = "meter_values_group";
-const CONSUMER_NAME = "worker_1";
-const BATCH_SIZE = 1000;
+const LIST_KEY = "meter_values_list";
+const PROCESSING_KEY = "meter_values_processing";
+const FLUSH_INTERVAL_MS = 5000;
 const MAX_RETRIES = 3;
 
 export interface MeterValuePayload {
@@ -23,211 +21,175 @@ export interface MeterValuePayload {
 
 export class MeterValueService {
   private static isProcessing = false;
-  private static workerRunning = false;
+  private static intervalId: NodeJS.Timeout | null = null;
 
   /**
-   * Initializes the Redis consumer group.
-   */
-  public static async initGroup(): Promise<void> {
-    try {
-      await redisClient.xgroup("CREATE", STREAM_KEY, GROUP_NAME, "0", "MKSTREAM");
-    } catch (error: any) {
-      if (!error.message.includes("BUSYGROUP")) {
-        logger.error(`Error creating consumer group: ${error}`);
-      }
-    }
-  }
-
-  /**
-   * Pushes a new meter value payload to the Redis Stream.
+   * Pushes a new meter value payload to the Redis List.
    */
   public static async addMeterValue(payload: MeterValuePayload): Promise<void> {
     try {
-      await redisClient.xadd(STREAM_KEY, "*", "payload", JSON.stringify(payload));
+      await redisClient.rpush(LIST_KEY, JSON.stringify(payload));
     } catch (error) {
-      logger.error(`Error adding meter value to stream: ${error}`);
+      logger.error(`Error adding meter value to list: ${error}`);
     }
   }
 
   /**
-   * Starts the background worker to process meter values in batches using streams.
+   * Starts the background interval to process meter values in batches.
    */
   public static async startWorker(): Promise<void> {
-    if (this.workerRunning) return;
-    this.workerRunning = true;
+    if (this.intervalId) return;
 
-    await this.initGroup();
-    logger.info("MeterValueService background stream worker started.");
+    logger.info("MeterValueService background list worker started.");
 
-    // Run the worker loop asynchronously
-    this.runWorkerLoop().catch((err) => {
-      logger.error(`MeterValueService worker loop error: ${err}`);
-      this.workerRunning = false;
-    });
+    this.intervalId = setInterval(() => {
+      this.runWorkerTask().catch((err) => {
+        logger.error(`MeterValueService worker task error: ${err}`);
+      });
+    }, FLUSH_INTERVAL_MS);
   }
 
   /**
    * Stops the background worker.
    */
   public static stopWorker(): void {
-    this.workerRunning = false;
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
   }
 
-  private static async runWorkerLoop(): Promise<void> {
-    while (this.workerRunning) {
-      if (this.isProcessing) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        continue;
-      }
-      this.isProcessing = true;
+  private static async runWorkerTask(): Promise<void> {
+    if (this.isProcessing) {
+      return;
+    }
+    this.isProcessing = true;
 
-      try {
-        // Read from the stream, blocking for up to 5000ms
-        const result = (await redisClient.xreadgroup(
-          "GROUP",
-          GROUP_NAME,
-          CONSUMER_NAME,
-          "COUNT",
-          BATCH_SIZE,
-          "BLOCK",
-          5000,
-          "STREAMS",
-          STREAM_KEY,
-          ">"
-        )) as any;
-
-        if (!result || result.length === 0) {
-          this.isProcessing = false;
-          continue;
-        }
-
-        const streamEntries = result[0][1]; // result[0] is [STREAM_KEY, entries]
-        if (streamEntries.length === 0) {
-          this.isProcessing = false;
-          continue;
-        }
-
-        const payloads: MeterValuePayload[] = [];
-        const entryIds: string[] = [];
-
-        for (const entry of streamEntries) {
-          const id = entry[0];
-          const fields = entry[1]; // array of keys and values ['payload', '{...}']
-
-          let payloadStr = "";
-          for (let i = 0; i < fields.length; i += 2) {
-            if (fields[i] === "payload") {
-              payloadStr = fields[i + 1];
-              break;
-            }
-          }
-
-          if (payloadStr) {
-            payloads.push(JSON.parse(payloadStr));
-            entryIds.push(id);
-          }
-        }
-
-        if (payloads.length > 0) {
-          let retryCount = 0;
-          let dbSuccess = false;
-
-          while (retryCount <= MAX_RETRIES && !dbSuccess) {
-            try {
-              // Batch insert into MeterValue
-              const meterValueData = payloads.map((p) => ({
-                transactionId: p.transactionId,
-                chargerId: p.chargerId,
-                connectorId: p.connectorId,
-                energy: p.energyValue,
-                power: p.powerValue,
-                soc: p.socValue,
-                current: p.currentValue,
-                voltage: p.voltageValue,
-                timestamp: new Date(p.timestamp),
-              }));
-
-              await prisma.meterValue.createMany({
-                data: meterValueData,
-                skipDuplicates: true,
-              });
-
-              // Group by transactionId to merge the values, keeping the most recent non-null/non-zero values
-              const latestValuesByTx = new Map<string, MeterValuePayload>();
-              for (const p of payloads) {
-                if (latestValuesByTx.has(p.transactionId)) {
-                  const existing = latestValuesByTx.get(p.transactionId)!;
-                  latestValuesByTx.set(p.transactionId, {
-                    ...existing,
-                    ...p,
-                    // Ensure partial metrics are not lost if a subsequent payload omits them
-                    energyValue: p.energyValue || existing.energyValue,
-                    powerValue: p.powerValue || existing.powerValue,
-                    socValue: p.socValue !== null ? p.socValue : existing.socValue,
-                    currentValue: p.currentValue !== null ? p.currentValue : existing.currentValue,
-                    voltageValue: p.voltageValue !== null ? p.voltageValue : existing.voltageValue,
-                    timestamp: new Date(Math.max(existing.timestamp.getTime(), p.timestamp.getTime())),
-                  });
-                } else {
-                  latestValuesByTx.set(p.transactionId, p);
-                }
-              }
-
-              // Update Transactions and RfidSessions
-              for (const [transactionId, latest] of latestValuesByTx.entries()) {
-                const txUpdateData = {
-                  energyConsumed: latest.energyValue,
-                  currentPower: latest.powerValue,
-                  ...(latest.socValue !== null && { soc: latest.socValue }),
-                  ...(latest.currentValue !== null && { current: latest.currentValue }),
-                  ...(latest.voltageValue !== null && { voltage: latest.voltageValue }),
-                  status: "charging",
-                };
-
-                await prisma.transaction.updateMany({
-                  where: { transactionId },
-                  data: txUpdateData,
-                });
-
-                await prisma.rfidSession.updateMany({
-                  where: { transactionId },
-                  data: txUpdateData,
-                });
-              }
-
-              dbSuccess = true;
-            } catch (dbError) {
-              retryCount++;
-              if (retryCount <= MAX_RETRIES) {
-                logger.warn(`Database insertion failed for meter values, retrying (${retryCount}/${MAX_RETRIES})... Error: ${dbError}`);
-                await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount)); // Exponential-ish backoff
-              } else {
-                logger.error(`Database insertion failed for meter values after ${MAX_RETRIES} retries. Moving to DLQ. Error: ${dbError}`);
-                // Move payloads to Dead Letter Queue (DLQ)
-                for (const p of payloads) {
-                  try {
-                    await redisClient.xadd(DLQ_STREAM_KEY, "*", "payload", JSON.stringify(p));
-                  } catch (dlqError) {
-                    logger.error(`Failed to push payload to DLQ: ${dlqError}`);
-                  }
-                }
-              }
-            }
-          }
-
-          // Acknowledge processed entries to prevent data loss (even if moved to DLQ, we acknowledge the main stream)
-          await redisClient.xack(STREAM_KEY, GROUP_NAME, ...entryIds);
-          if (dbSuccess) {
-            logger.debug(`MeterValueService processed and acknowledged ${payloads.length} entries.`);
-          } else {
-            logger.debug(`MeterValueService moved ${payloads.length} entries to DLQ and acknowledged them from main stream.`);
-          }
-        }
-      } catch (error) {
-        logger.error(`Error processing meter values stream: ${error}`);
-      } finally {
+    try {
+      // Check if there are elements in the list
+      const listExists = await redisClient.exists(LIST_KEY);
+      if (!listExists) {
         this.isProcessing = false;
+        return;
       }
+
+      // Atomically rename the list to a processing key
+      try {
+        await redisClient.rename(LIST_KEY, PROCESSING_KEY);
+      } catch (err: any) {
+        if (err.message && err.message.includes("no such key")) {
+          // List was emptied before rename
+          this.isProcessing = false;
+          return;
+        }
+        throw err;
+      }
+
+      // Read all elements from the processing list
+      const items = await redisClient.lrange(PROCESSING_KEY, 0, -1);
+
+      if (!items || items.length === 0) {
+        await redisClient.del(PROCESSING_KEY);
+        this.isProcessing = false;
+        return;
+      }
+
+      const payloads: MeterValuePayload[] = items.map((item) => JSON.parse(item));
+
+      let retryCount = 0;
+      let dbSuccess = false;
+
+      while (retryCount <= MAX_RETRIES && !dbSuccess) {
+        try {
+          // Batch insert into MeterValue
+          const meterValueData = payloads.map((p) => ({
+            transactionId: p.transactionId,
+            chargerId: p.chargerId,
+            connectorId: p.connectorId,
+            energy: p.energyValue,
+            power: p.powerValue,
+            soc: p.socValue,
+            current: p.currentValue,
+            voltage: p.voltageValue,
+            timestamp: new Date(p.timestamp),
+          }));
+
+          await prisma.meterValue.createMany({
+            data: meterValueData,
+            skipDuplicates: true,
+          });
+
+          // Group by transactionId to merge the values, keeping the most recent non-null/non-zero values
+          const latestValuesByTx = new Map<string, MeterValuePayload>();
+          for (const p of payloads) {
+            if (latestValuesByTx.has(p.transactionId)) {
+              const existing = latestValuesByTx.get(p.transactionId)!;
+              latestValuesByTx.set(p.transactionId, {
+                ...existing,
+                ...p,
+                // Ensure partial metrics are not lost if a subsequent payload omits them
+                energyValue: p.energyValue || existing.energyValue,
+                powerValue: p.powerValue || existing.powerValue,
+                socValue: p.socValue !== null ? p.socValue : existing.socValue,
+                currentValue: p.currentValue !== null ? p.currentValue : existing.currentValue,
+                voltageValue: p.voltageValue !== null ? p.voltageValue : existing.voltageValue,
+                timestamp: new Date(Math.max(new Date(existing.timestamp).getTime(), new Date(p.timestamp).getTime())),
+              });
+            } else {
+              latestValuesByTx.set(p.transactionId, p);
+            }
+          }
+
+          // Update Transactions and RfidSessions
+          for (const [transactionId, latest] of latestValuesByTx.entries()) {
+            const txUpdateData = {
+              energyConsumed: latest.energyValue,
+              currentPower: latest.powerValue,
+              ...(latest.socValue !== null && { soc: latest.socValue }),
+              ...(latest.currentValue !== null && { current: latest.currentValue }),
+              ...(latest.voltageValue !== null && { voltage: latest.voltageValue }),
+              status: "charging",
+            };
+
+            await prisma.transaction.updateMany({
+              where: { transactionId },
+              data: txUpdateData,
+            });
+
+            await prisma.rfidSession.updateMany({
+              where: { transactionId },
+              data: txUpdateData,
+            });
+          }
+
+          dbSuccess = true;
+        } catch (dbError) {
+          retryCount++;
+          if (retryCount <= MAX_RETRIES) {
+            logger.warn(`Database insertion failed for meter values, retrying (${retryCount}/${MAX_RETRIES})... Error: ${dbError}`);
+            await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount)); // Exponential-ish backoff
+          } else {
+            logger.error(`Database insertion failed for meter values after ${MAX_RETRIES} retries. Re-queuing failed items.`);
+            // Re-queue the items back to the main list
+            if (payloads.length > 0) {
+              const rawPayloads = payloads.map((p) => JSON.stringify(p));
+              await redisClient.lpush(LIST_KEY, ...rawPayloads);
+            }
+          }
+        }
+      }
+
+      // Cleanup processing key
+      await redisClient.del(PROCESSING_KEY);
+
+      if (dbSuccess) {
+        logger.debug(`MeterValueService processed ${payloads.length} entries from the list.`);
+      }
+
+    } catch (error) {
+      logger.error(`Error processing meter values list: ${error}`);
+    } finally {
+      this.isProcessing = false;
     }
   }
 }
