@@ -29,6 +29,8 @@ export class MeterValueService {
   public static async addMeterValue(payload: MeterValuePayload): Promise<void> {
     try {
       await redisClient.rpush(LIST_KEY, JSON.stringify(payload));
+      // Trim the list to prevent memory leaks if it gets too large
+      await redisClient.ltrim(LIST_KEY, -100000, -1);
     } catch (error) {
       logger.error(`Error adding meter value to list: ${error}`);
     }

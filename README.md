@@ -291,3 +291,12 @@ ws://<your-host>:9220/OCPP/[1.6|2.1]/<charger-id>
 ```
 
 > **Note:** `<charger-id>` must match the `charger_id` of a charger registered in the system (via the dashboard or database seeding).
+
+## Testing
+
+The Backend uses `jest` for unit testing. You can run the tests using:
+```bash
+cd Backend
+npm run test
+```
+The Frontend does not currently have an automated test suite configured. Rely on `npm run lint` for code correctness.

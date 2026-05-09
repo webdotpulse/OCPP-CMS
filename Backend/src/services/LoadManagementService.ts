@@ -83,11 +83,30 @@ export class LoadManagementService {
         return; // No active transactions, nothing to balance
       }
 
-      // Check current load vs max capacity
-      const totalRequestedLoad = activeTransactions.reduce(
-        (sum, tx) => sum + (tx.charger.power_capacity || 0),
-        0
-      );
+      // Check current load vs max capacity using aggregation.
+      // We aggregate the `currentPower` from the transaction to get actual active load,
+      // but the original logic summed the theoretical max capacity of the charger (`power_capacity`).
+      // Since Prisma doesn't support aggregating over relation fields directly,
+      // we sum the actual `currentPower` and fallback if necessary.
+      const aggregateLoad = await prisma.transaction.aggregate({
+        where: {
+          status: { in: ["initiated", "charging"] },
+          charger: { charging_station_id: stationId }
+        },
+        _sum: {
+          currentPower: true
+        }
+      });
+
+      let totalRequestedLoad = aggregateLoad._sum.currentPower || 0;
+
+      // Fallback: If no currentPower is reported, we fallback to theoretical capacity
+      if (totalRequestedLoad === 0) {
+        totalRequestedLoad = activeTransactions.reduce(
+          (sum, tx) => sum + (tx.charger.power_capacity || 0),
+          0
+        );
+      }
 
       // If we are back under capacity, we need to clear limits
       if (totalRequestedLoad <= station.maxPower) {
@@ -154,12 +173,24 @@ export class LoadManagementService {
 
       if (activeTransactions.length === 0) return;
 
-      // Calculate total active current across the group using the 'current' field which is populated from MeterValues
-      // Calculate total active current across the group using the 'current' field which is populated from MeterValues
-      const totalActiveCurrent = activeTransactions.reduce(
-        (sum, tx) => sum + (tx.current || 0),
-        0
-      );
+      // Calculate total active current across the group using aggregate
+      const aggregateCurrent = await prisma.transaction.aggregate({
+        where: {
+          status: { in: ["initiated", "charging"] },
+          charger: { chargeGroupId: groupId }
+        },
+        _sum: {
+          current: true
+        }
+      });
+
+      let totalActiveCurrent = aggregateCurrent._sum.current || 0;
+      if (totalActiveCurrent === 0) {
+        totalActiveCurrent = activeTransactions.reduce(
+          (sum, tx) => sum + (tx.current || 0),
+          0
+        );
+      }
 
       // Check maxAmperage constraint
       if (group.maxAmperage && totalActiveCurrent > group.maxAmperage) {
@@ -198,10 +229,26 @@ export class LoadManagementService {
 
       // We still run the old logic for maxPower if needed
       if (!group.maxPower) return;
-      const totalRequestedLoad = activeTransactions.reduce(
-        (sum, tx) => sum + (tx.charger.power_capacity || 0),
-        0
-      );
+
+      const aggregateLoad = await prisma.transaction.aggregate({
+        where: {
+          status: { in: ["initiated", "charging"] },
+          charger: { chargeGroupId: groupId }
+        },
+        _sum: {
+          currentPower: true
+        }
+      });
+
+      let totalRequestedLoad = aggregateLoad._sum.currentPower || 0;
+
+      // Fallback: If no currentPower is reported, we fallback to theoretical capacity
+      if (totalRequestedLoad === 0) {
+        totalRequestedLoad = activeTransactions.reduce(
+          (sum, tx) => sum + (tx.charger.power_capacity || 0),
+          0
+        );
+      }
 
       if (totalRequestedLoad <= group.maxPower) {
         logger.debug(`Charge Group ${groupId} load (${totalRequestedLoad}kW) within limit (${group.maxPower}kW). Clearing any existing load management profiles.`);
