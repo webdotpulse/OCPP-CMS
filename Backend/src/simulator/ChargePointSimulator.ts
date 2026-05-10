@@ -21,6 +21,12 @@ export class ChargePointSimulator {
   public energyConsumedWh: number = 0;
   public sessionStartEnergyWh: number = 0;
 
+  // Local configuration state
+  public localConfig: Record<string, string> = {
+    "MeterValueSampleInterval": "60",
+    "MeterValuesSampledData": "Power.Active.Import,Energy.Active.Import.Register"
+  };
+
   private sessionStartTime: number | null = null;
 
   private autoLoopInterval: NodeJS.Timeout | null = null;
@@ -98,11 +104,34 @@ export class ChargePointSimulator {
       return { status: "Accepted" };
     });
 
-    this.client.handle("GetConfiguration", async () => {
-      return { configurationKey: [], unknownKey: [] };
+    this.client.handle("GetConfiguration", async (params: any) => {
+      let keysToReturn = Object.keys(this.localConfig);
+      const unknownKey: string[] = [];
+
+      if (params && params.key && Array.isArray(params.key) && params.key.length > 0) {
+        keysToReturn = [];
+        for (const k of params.key) {
+          if (this.localConfig[k] !== undefined) {
+            keysToReturn.push(k);
+          } else {
+            unknownKey.push(k);
+          }
+        }
+      }
+
+      const configurationKey = keysToReturn.map(k => ({
+        key: k,
+        readonly: false,
+        value: this.localConfig[k]
+      }));
+
+      return { configurationKey, unknownKey };
     });
 
-    this.client.handle("ChangeConfiguration", async () => {
+    this.client.handle("ChangeConfiguration", async (params: any) => {
+      if (params && params.key && params.value !== undefined) {
+        this.localConfig[params.key] = params.value;
+      }
       return { status: "Accepted" };
     });
   }
