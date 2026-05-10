@@ -297,11 +297,11 @@ export async function handleStartTransaction(
 
     // Update connector status
     const existingConnector = await prisma.connector.findFirst({
-      where: {
-        charger_id: chargerId,
-        connector_name: connectorName
-      }
-    });
+        where: {
+          evse: { charger_id: chargerId },
+          connector_name: connectorName
+        }
+      });
 
     if (existingConnector) {
       await prisma.connector.update({

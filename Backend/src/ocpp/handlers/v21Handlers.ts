@@ -352,7 +352,7 @@ export async function handleTransactionEvent(
 
       const existingConnector = await prisma.connector.findFirst({
         where: {
-          charger_id: chargerId,
+          evse: { charger_id: chargerId },
           connector_name: connectorName
         }
       });
