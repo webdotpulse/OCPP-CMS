@@ -11,6 +11,8 @@
       "tariffs": "Tarieven",
       "roaming": "Roaming",
       "simulator": "Simulator",
+      "configProfiles": "Configuratie Profielen",
+      "quirkProfiles": "Quirk Profielen",
       "settings": "Instellingen",
       "ocppConsole": "OCPP Console"
     },

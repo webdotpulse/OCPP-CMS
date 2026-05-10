@@ -31,6 +31,7 @@ const routes = [
   { key: 'nav.roaming', path: '/roaming', icon: Globe, adminOnly: true },
   { key: 'nav.simulator', path: '/simulator', icon: Activity, adminOnly: true },
   { key: 'nav.configProfiles', path: '/config-profiles', icon: Settings, adminOnly: true },
+  { key: 'nav.quirkProfiles', path: '/quirk-profiles', icon: Settings, adminOnly: true },
   { key: 'nav.settings', path: '/settings', icon: Settings },
   { key: 'nav.ocppConsole', path: '/ocpp', icon: TerminalSquare },
 ];
