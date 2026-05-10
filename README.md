@@ -12,9 +12,9 @@
 
 <p align="center">
   <a href="https://github.com/savekar-ev/open-source-csms/blob/main/LICENSE"><img alt="License: ISC" src="https://img.shields.io/badge/License-ISC-blue.svg" /></a>
-  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-20%2B-green?logo=node.js" />
+  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-24%2B-green?logo=node.js" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript" />
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15%2B-black?logo=next.js" />
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16%2B-black?logo=next.js" />
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-15%2B-blue?logo=postgresql" />
   <img alt="Redis" src="https://img.shields.io/badge/Redis-7%2B-red?logo=redis" />
   <img alt="OCPP" src="https://img.shields.io/badge/OCPP-1.6%20%7C%202.1-orange" />
@@ -195,7 +195,7 @@ open-source-csms/
 ### Backend
 | Layer | Technology |
 |-------|-----------|
-| Runtime | Node.js 22+ |
+| Runtime | Node.js 24+ |
 | Language | TypeScript |
 | Framework | Express.js |
 | OCPP Protocol | Native `ws` WebSocket library |
