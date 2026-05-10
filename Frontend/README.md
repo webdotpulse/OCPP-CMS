@@ -23,7 +23,7 @@ This directory contains the Next.js 15 based administrative dashboard for the Op
 
 ## Prerequisites
 
-- Node.js 18 or higher
+- Node.js 24 or higher
 
 ## Getting Started
 
