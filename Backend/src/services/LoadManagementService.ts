@@ -125,15 +125,6 @@ export class LoadManagementService {
         return;
       }
 
-      // Only throttle if load is nearing the safe limit.
-      if (totalActiveLoadKw < safeLimitKw * 0.8) {
-        logger.debug(`Station ${stationId} active load (${totalActiveLoadKw.toFixed(1)}kW) is well within safe limit (${safeLimitKw.toFixed(1)}kW). Clearing power load management profiles.`);
-        for (const tx of activeTransactions) {
-          await this.clearLoadManagementProfile(tx.charger_id, 100);
-        }
-        return;
-      }
-
       // If ACTUAL active load exceeds safe limit, or if limits are needed to prevent going over.
       // (If theoretical > safe limit, we must always enforce limits to be safe)
       logger.info(`Station ${stationId} load (Active: ${totalActiveLoadKw.toFixed(1)}kW, Theoretical: ${theoreticalMaxLoadKw.toFixed(1)}kW) requires load balancing (Safe Limit: ${safeLimitKw.toFixed(1)}kW).`);
@@ -237,12 +228,22 @@ export class LoadManagementService {
 
         const safeLimitAmps = group.maxAmperage * 0.95;
 
-        // Since we don't have a reliable `theoretical_max_current` field per charger in Prisma,
-        // we strictly throttle if the active measured current exceeds the safety margin.
-        // We will clear limits only when we have enough headroom (e.g. half the safety limit) to avoid heavy oscillation,
-        // or we just accept slight oscillation on Amperage until a DB field is added. For now, clear if safely below.
-        if (totalActiveCurrent > safeLimitAmps) {
-          logger.info(`Charge Group ${groupId} active current (${totalActiveCurrent.toFixed(1)}A) requires load balancing (Safe Limit: ${safeLimitAmps.toFixed(1)}A).`);
+        // Calculate theoretical max current based on power capacity (assuming 230V per phase, or just a rough max estimate).
+        // A safer way is estimating max amperage from the power capacity. E.g. 22kW -> ~32A (3-phase)
+        let theoreticalMaxCurrentAmps = activeTransactions.reduce((sum, tx) => {
+          // If power capacity exists, estimate max amps. Using a conservative estimate of 32A max per typical AC charger.
+          // Or just using total active transactions * 32A.
+          const estimatedMaxTxAmps = tx.charger.power_capacity ? Math.ceil((tx.charger.power_capacity * 1000) / (230 * 3)) : 32;
+          return sum + Math.max(32, estimatedMaxTxAmps); // Default to at least 32A assumption per charger
+        }, 0);
+
+        if (theoreticalMaxCurrentAmps <= safeLimitAmps) {
+          logger.debug(`Charge Group ${groupId} theoretical current (${theoreticalMaxCurrentAmps.toFixed(1)}A) within safe limit (${safeLimitAmps.toFixed(1)}A). Clearing any existing amp load management profiles.`);
+          for (const tx of activeTransactions) {
+            await this.clearLoadManagementProfile(tx.charger_id, 101).catch((err: any) => logger.error(`Failed to clear amp load management profile ${tx.charger_id}: ${err}`));
+          }
+        } else {
+          logger.info(`Charge Group ${groupId} active current (${totalActiveCurrent.toFixed(1)}A, Theoretical: ${theoreticalMaxCurrentAmps.toFixed(1)}A) requires load balancing (Safe Limit: ${safeLimitAmps.toFixed(1)}A).`);
 
           // Ensure limit is at least 6A (standard minimum for EV charging)
           const limitPerTransactionAmps = Math.max(6, Math.floor(safeLimitAmps / activeTransactions.length));
@@ -286,13 +287,6 @@ export class LoadManagementService {
               logger.error(`Failed to dispatch amp throttle profile for tx ${tx.id}: ${err}`)
             );
           }
-        } else if (totalActiveCurrent < (safeLimitAmps * 0.8)) {
-          // Add a simple hysteresis / headroom check to reduce Amperage oscillation:
-          // Only clear limits if the active load has dropped significantly (below 80% of safe limit).
-          logger.debug(`Charge Group ${groupId} active current (${totalActiveCurrent.toFixed(1)}A) is well within safe limit (${safeLimitAmps.toFixed(1)}A). Clearing any existing amp load management profiles.`);
-          for (const tx of activeTransactions) {
-            await this.clearLoadManagementProfile(tx.charger_id, 101).catch((err: any) => logger.error(`Failed to clear amp load management profile ${tx.charger_id}: ${err}`));
-          }
         }
       }
 
@@ -325,21 +319,6 @@ export class LoadManagementService {
       // CLEAR limits based on THEORETICAL max load to prevent oscillation
       if (theoreticalMaxLoadKw <= safeLimitKw) {
         logger.debug(`Charge Group ${groupId} theoretical load (${theoreticalMaxLoadKw.toFixed(1)}kW) within safe limit (${safeLimitKw.toFixed(1)}kW). Clearing any existing load management profiles.`);
-        for (const tx of activeTransactions) {
-          await this.clearLoadManagementProfile(tx.charger_id, 100).catch((err: any) => logger.error(`Failed to clear power load management profile ${tx.charger_id}: ${err}`));
-        }
-        return;
-      }
-
-      // Only enforce actual limit if actual load is dangerously close (e.g. > 90% of safe limit) or above
-      // otherwise, we can distribute more fairly or just let it be. But wait, if theoretical is high, we must throttle.
-      // If we throttle to limitPerTransactionKw, and the load drops, we shouldn't keep it there permanently if it's safe.
-
-      // Let's implement Dynamic Load Balancing logic.
-      // If actual load > safe limit, we throttle.
-      // If actual load < safe limit * 0.8, we clear limits to allow faster charging.
-      if (totalActiveLoadKw < safeLimitKw * 0.8) {
-        logger.debug(`Charge Group ${groupId} active load (${totalActiveLoadKw.toFixed(1)}kW) is well within safe limit (${safeLimitKw.toFixed(1)}kW). Clearing power load management profiles.`);
         for (const tx of activeTransactions) {
           await this.clearLoadManagementProfile(tx.charger_id, 100).catch((err: any) => logger.error(`Failed to clear power load management profile ${tx.charger_id}: ${err}`));
         }
