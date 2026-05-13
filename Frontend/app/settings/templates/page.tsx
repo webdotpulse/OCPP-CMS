@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { AppShell } from "@/components/layout/AppShell";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 interface MailTemplate {
   id?: number;
@@ -14,13 +18,21 @@ interface MailTemplate {
 }
 
 export default function MailTemplatesPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [templates, setTemplates] = useState<MailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTemplate, setEditingTemplate] = useState<MailTemplate | null>(null);
 
   useEffect(() => {
-    fetchTemplates();
-  }, []);
+    if (!authLoading) {
+      if (!user || user.role !== "admin") {
+        router.push("/dashboard");
+      } else {
+        fetchTemplates();
+      }
+    }
+  }, [user, authLoading, router]);
 
   const fetchTemplates = async () => {
     try {
@@ -83,21 +95,29 @@ export default function MailTemplatesPage() {
     setEditingTemplate((prev) => prev ? { ...prev, [name]: value } : null);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (authLoading || loading) {
+    return (
+      <AppShell>
+        <div className="p-6">Loading...</div>
+      </AppShell>
+    );
+  }
+
+  if (!user || user.role !== "admin") {
+    return null; // Will redirect
+  }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Mail Templates</h1>
-        {!editingTemplate && (
-          <button
-            onClick={handleCreate}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            Create Template
-          </button>
-        )}
-      </div>
+    <AppShell>
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Mail Templates</h1>
+          {!editingTemplate && (
+            <Button onClick={handleCreate}>
+              Create Template
+            </Button>
+          )}
+        </div>
 
       {editingTemplate ? (
         <form onSubmit={handleSave} className="max-w-3xl space-y-4 border p-4 rounded shadow">
@@ -185,7 +205,7 @@ export default function MailTemplatesPage() {
               </tr>
             </thead>
             <tbody>
-              {templates.map((tpl) => (
+              {templates?.map((tpl) => (
                 <tr key={tpl.id} className="hover:bg-gray-50">
                   <td className="py-2 px-4 border-b">{tpl.name}</td>
                   <td className="py-2 px-4 border-b">{tpl.type}</td>
@@ -206,17 +226,18 @@ export default function MailTemplatesPage() {
                   </td>
                 </tr>
               ))}
-              {templates.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="py-4 text-center text-gray-500">
-                    No templates found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+                {(!templates || templates.length === 0) && (
+                  <tr>
+                    <td colSpan={4} className="py-4 text-center text-gray-500">
+                      No templates found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </AppShell>
   );
 }

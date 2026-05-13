@@ -3,8 +3,15 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { AppShell } from "@/components/layout/AppShell";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function MailSettingsPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [config, setConfig] = useState({
     host: "",
     port: 587,
@@ -16,8 +23,14 @@ export default function MailSettingsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchConfig();
-  }, []);
+    if (!authLoading) {
+      if (!user || user.role !== "admin") {
+        router.push("/dashboard");
+      } else {
+        fetchConfig();
+      }
+    }
+  }, [user, authLoading, router]);
 
   const fetchConfig = async () => {
     try {
@@ -50,12 +63,28 @@ export default function MailSettingsPage() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (authLoading || loading) {
+    return (
+      <AppShell>
+        <div className="p-6">Loading...</div>
+      </AppShell>
+    );
+  }
+
+  if (!user || user.role !== "admin") {
+    return null; // Will redirect
+  }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Mail Configuration</h1>
-      <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
+    <AppShell>
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Mail Configuration</h1>
+          <Link href="/settings/templates">
+            <Button variant="outline">Manage Mail Templates</Button>
+          </Link>
+        </div>
+        <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
         <div>
           <label className="block text-sm font-medium">SMTP Host</label>
           <input
@@ -119,13 +148,11 @@ export default function MailSettingsPage() {
           />
           <label className="ml-2 block text-sm">Active</label>
         </div>
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Save Configuration
-        </button>
-      </form>
-    </div>
+          <Button type="submit">
+            Save Configuration
+          </Button>
+        </form>
+      </div>
+    </AppShell>
   );
 }
