@@ -39,7 +39,7 @@ export default function MailSettingsPage() {
         setConfig(response.data.data);
       }
     } catch (error) {
-      console.error("Failed to load mail config", error);
+      toast.error("Failed to load mail configuration");
     } finally {
       setLoading(false);
     }

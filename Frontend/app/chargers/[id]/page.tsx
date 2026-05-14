@@ -72,7 +72,7 @@ export default function ChargerDetailPage() {
         const response = await api.get('/config-profiles');
         setProfiles(response.data || []);
       } catch {
-        console.error("Failed to load profiles");
+        toast.error("Failed to load configuration profiles");
       }
     };
 
@@ -92,7 +92,7 @@ export default function ChargerDetailPage() {
         const sessions = response.data.filter((s: any) => s.chargerId === Number(id));
         setActiveTxns(sessions);
       } catch (err) {
-        console.error(err);
+        toast.error("Failed to fetch active transactions");
       }
     };
     fetchActiveTxns();

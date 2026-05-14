@@ -26,7 +26,7 @@ export default function UsersPage() {
       const response = await api.get('/users', { params: { search: searchQuery || undefined } });
       setUsers(response.data.data || response.data);
     } catch (error) {
-      console.error("Failed to fetch users", error);
+      toast.error("Failed to fetch users");
     } finally {
       setIsLoading(false);
     }
