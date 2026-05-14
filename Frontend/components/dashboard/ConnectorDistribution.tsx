@@ -51,7 +51,7 @@ export function ConnectorDistribution() {
   return (
     <Card className="col-span-2">
       <CardHeader>
-        <CardTitle>Connector Status</CardTitle>
+        <CardTitle>Channel Status</CardTitle>
       </CardHeader>
       <CardContent className="h-[300px] flex items-center justify-center">
         {isLoading ? (

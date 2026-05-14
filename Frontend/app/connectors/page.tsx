@@ -32,13 +32,13 @@ export default function ConnectorsPage() {
   }, []);
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this connector?")) return;
+    if (!confirm("Are you sure you want to delete this channel?")) return;
     try {
       await api.delete(`/connectors/${id}`);
       setConnectors(connectors.filter(c => c.connector_id !== id));
     } catch (error) {
-      logger.error("Failed to delete connector", error);
-      alert("Error deleting connector.");
+      logger.error("Failed to delete channel", error);
+      alert("Error deleting channel.");
     }
   };
 
@@ -54,13 +54,13 @@ export default function ConnectorsPage() {
     <AppShell>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">All Connectors</h1>
-          <p className="text-muted-foreground">Global view of all charge points and their hardware connectors.</p>
+          <h1 className="text-2xl font-bold tracking-tight">All Channels</h1>
+          <p className="text-muted-foreground">Global view of all charge points and their hardware channels.</p>
         </div>
         {user?.role === "admin" && (
           <Link href="/connectors/new">
             <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add Connector
+              <Plus className="mr-2 h-4 w-4" /> Add Channel
             </Button>
           </Link>
         )}
@@ -70,7 +70,7 @@ export default function ConnectorsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Connector</TableHead>
+              <TableHead>Channel</TableHead>
               <TableHead>Charger</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Max Power</TableHead>
@@ -81,11 +81,11 @@ export default function ConnectorsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">Loading connectors...</TableCell>
+                <TableCell colSpan={6} className="h-24 text-center">Loading channels...</TableCell>
               </TableRow>
             ) : connectors.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No connectors found.</TableCell>
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No channels found.</TableCell>
               </TableRow>
             ) : (
               connectors.map((conn) => (

@@ -20,8 +20,8 @@ export default function NewConnectorPage() {
           <ChevronLeft className="mr-2 h-4 w-4" /> Back
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Add physical Connector</h1>
-          <p className="text-muted-foreground">Register an individual charge point connector to a piece of hardware.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Add physical Channel</h1>
+          <p className="text-muted-foreground">Register an individual charge point channel to a piece of hardware.</p>
         </div>
       </div>
       <ConnectorForm />

@@ -181,7 +181,7 @@ export default function TransactionDetailPage() {
                 </Link>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Connector Name</p>
+                <p className="text-xs text-muted-foreground">Channel Name</p>
                 <p className="font-medium">{txn.connectorName}</p>
               </div>
               <div>

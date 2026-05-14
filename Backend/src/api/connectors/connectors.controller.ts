@@ -58,10 +58,10 @@ export const getAllConnectors = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    logger.error(`Error getting connectors: ${error}`);
+    logger.error(`Error getting channels: ${error}`);
     res.status(500).json({
       success: false,
-      error: "Failed to get connectors",
+      error: "Failed to get channels",
     });
   }
 };
@@ -76,7 +76,7 @@ export const getConnectorById = async (req: Request, res: Response) => {
     if (!connectorId) {
       return res.status(400).json({
         success: false,
-        error: "Invalid connector ID",
+        error: "Invalid channel ID",
       });
     }
 
@@ -98,16 +98,16 @@ export const getConnectorById = async (req: Request, res: Response) => {
     if (!connector) {
       return res.status(404).json({
         success: false,
-        error: "Connector not found",
+        error: "Channel not found",
       });
     }
 
     res.json({ success: true, data: connector });
   } catch (error) {
-    logger.error(`Error getting connector: ${error}`);
+    logger.error(`Error getting channel: ${error}`);
     res.status(500).json({
       success: false,
-      error: "Failed to get connector",
+      error: "Failed to get channel",
     });
   }
 };
@@ -177,13 +177,13 @@ export const createConnector = async (req: Request, res: Response) => {
       include: { evse: { include: { charger: true } } },
     });
 
-    logger.info(`Connector created: ${connector.connector_name}`);
+    logger.info(`Channel created: ${connector.connector_name}`);
     res.status(201).json({ success: true, data: connector });
   } catch (error) {
-    logger.error(`Error creating connector: ${error}`);
+    logger.error(`Error creating channel: ${error}`);
     res.status(500).json({
       success: false,
-      error: "Failed to create connector",
+      error: "Failed to create channel",
     });
   }
 };
@@ -198,7 +198,7 @@ export const updateConnector = async (req: Request, res: Response) => {
     if (!connectorId) {
       return res.status(400).json({
         success: false,
-        error: "Invalid connector ID",
+        error: "Invalid channel ID",
       });
     }
 
@@ -210,13 +210,13 @@ export const updateConnector = async (req: Request, res: Response) => {
       include: { evse: { include: { charger: true } } },
     });
 
-    logger.info(`Connector updated: ${connector.connector_name}`);
+    logger.info(`Channel updated: ${connector.connector_name}`);
     res.json({ success: true, data: connector });
   } catch (error) {
-    logger.error(`Error updating connector: ${error}`);
+    logger.error(`Error updating channel: ${error}`);
     res.status(500).json({
       success: false,
-      error: "Failed to update connector",
+      error: "Failed to update channel",
     });
   }
 };
@@ -231,7 +231,7 @@ export const deleteConnector = async (req: Request, res: Response) => {
     if (!connectorId) {
       return res.status(400).json({
         success: false,
-        error: "Invalid connector ID",
+        error: "Invalid channel ID",
       });
     }
 
@@ -239,13 +239,13 @@ export const deleteConnector = async (req: Request, res: Response) => {
       where: { connector_id: connectorId },
     });
 
-    logger.info(`Connector deleted: ID ${connectorId}`);
-    res.json({ success: true, message: "Connector deleted" });
+    logger.info(`Channel deleted: ID ${connectorId}`);
+    res.json({ success: true, message: "Channel deleted" });
   } catch (error) {
-    logger.error(`Error deleting connector: ${error}`);
+    logger.error(`Error deleting channel: ${error}`);
     res.status(500).json({
       success: false,
-      error: "Failed to delete connector",
+      error: "Failed to delete channel",
     });
   }
 };

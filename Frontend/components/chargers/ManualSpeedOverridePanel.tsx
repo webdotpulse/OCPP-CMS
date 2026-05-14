@@ -8,7 +8,7 @@ import { Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 
-interface Connector {
+interface Channel {
   connector_id: number;
   connector_name?: string;
 }
@@ -19,7 +19,7 @@ interface ActiveTxn {
 
 interface ManualSpeedOverridePanelProps {
   chargerId: number;
-  connectors: Connector[];
+  connectors: Channel[];
   activeTxns: ActiveTxn[];
 }
 
@@ -51,7 +51,7 @@ export function ManualSpeedOverridePanel({ chargerId, connectors, activeTxns }: 
       };
 
       await api.post('/ocpp/set-charging-profile', payload);
-      toast.success(`Speed limit set to ${limit}A for connector ${connectorId}`);
+      toast.success(`Speed limit set to ${limit}A for channel ${connectorId}`);
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to set charging profile");
     } finally {
@@ -71,7 +71,7 @@ export function ManualSpeedOverridePanel({ chargerId, connectors, activeTxns }: 
         delete newLimits[connectorId];
         return newLimits;
       });
-      toast.success(`Speed limit cleared for connector ${connectorId}`);
+      toast.success(`Speed limit cleared for channel ${connectorId}`);
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to clear charging profile");
     } finally {
@@ -99,7 +99,7 @@ export function ManualSpeedOverridePanel({ chargerId, connectors, activeTxns }: 
           const activeTxn = activeTxns.find(t => t.connectorName === String(conn.connector_id) || t.connectorName === conn.connector_name);
           return (
             <div key={conn.connector_id} className="rounded-md border bg-muted/20 p-4">
-              <h4 className="font-medium text-sm mb-4">Connector {conn.connector_id} {conn.connector_name ? `(${conn.connector_name})` : ''}</h4>
+              <h4 className="font-medium text-sm mb-4">Channel {conn.connector_id} {conn.connector_name ? `(${conn.connector_name})` : ''}</h4>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <div className="flex-1 w-full max-w-md space-y-3">
                   <div className="flex justify-between items-center text-sm">

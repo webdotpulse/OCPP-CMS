@@ -127,7 +127,7 @@ model Evse {
 // Charge connector (multiple per evse)
 model Connector {
   connector_id   Int      @id @default(autoincrement())
-  connector_name String   @default("Connector 1")
+  connector_name String   @default("Channel 1")
   status         String
   current_type   String
   max_current    Float?

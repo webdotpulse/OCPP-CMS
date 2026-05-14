@@ -207,7 +207,7 @@ export async function handleStatusNotification(
         logger.info(`Auto-created EVSE ${evseId} for charger ${chargerId}`);
       }
 
-      const connectorName = `Connector ${connectorId}`;
+      const connectorName = `Channel ${connectorId}`;
 
       const existingConnector = await prisma.connector.findFirst({
         where: {
@@ -231,7 +231,7 @@ export async function handleStatusNotification(
             updatedAt: new Date(),
           }
         });
-        logger.info(`Auto-created connector ${connectorName} for EVSE ${evseId} on charger ${chargerId}`);
+        logger.info(`Auto-created channel ${connectorName} for EVSE ${evseId} on charger ${chargerId}`);
       }
     }
 
@@ -242,7 +242,7 @@ export async function handleStatusNotification(
     });
 
     logger.info(
-      `StatusNotification from charger ${chargerId}: connector ${connectorId} status = ${status}`
+      `StatusNotification from charger ${chargerId}: channel ${connectorId} status = ${status}`
     );
 
     const response = {};
@@ -319,7 +319,7 @@ export async function handleTransactionEvent(
         rfidUserId = rfidUser?.rfid_user_id;
       }
 
-      const connectorName = `Connector ${connectorId}`;
+      const connectorName = `Channel ${connectorId}`;
       const newTransaction = await prisma.transaction.create({
         data: {
           transactionId: String(transactionId),
@@ -364,7 +364,7 @@ export async function handleTransactionEvent(
         });
       }
 
-      logger.info(`Transaction ${transactionId} started on charger ${chargerId}, connector ${connectorId}`);
+      logger.info(`Transaction ${transactionId} started on charger ${chargerId}, channel ${connectorId}`);
 
       if (newTransaction.charger.charging_station_id) {
         loadManagementService.balanceSiteLoad(newTransaction.charger.charging_station_id)
