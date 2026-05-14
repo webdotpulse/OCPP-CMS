@@ -25,7 +25,7 @@ export default function MobileChargerDetails() {
       const sessions = response.data.filter((s: any) => s.chargerId === charger.charger_id);
       setActiveTxns(sessions);
     } catch (err) {
-      console.error(err);
+      toast.error("Failed to fetch active transactions");
     }
   }, [charger?.charger_id]);
 

@@ -41,7 +41,7 @@ export default function MailTemplatesPage() {
         setTemplates(response.data.data);
       }
     } catch (error) {
-      console.error("Failed to load templates", error);
+      toast.error("Failed to load mail templates");
     } finally {
       setLoading(false);
     }

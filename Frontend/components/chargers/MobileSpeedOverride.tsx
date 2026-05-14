@@ -42,7 +42,6 @@ export function MobileSpeedOverride({ chargerId, currentPower }: MobileSpeedOver
       await api.post('/ocpp/set-charging-profile', payload);
       toast.success(`Speed limit set to ${limit}A successfully`);
     } catch (error) {
-      console.error('Failed to set charging profile:', error);
       toast.error('Failed to set speed limit. Ensure the charger is connected.');
     } finally {
       setIsSetting(false);

@@ -65,7 +65,6 @@ export default function EditChargeGroupPage() {
         })));
         setSelectedUsersDetails(initialUsers.map((u: any) => u.user));
       } catch (err) {
-        console.error(err);
         toast.error("Failed to load charge group data");
       }
     };

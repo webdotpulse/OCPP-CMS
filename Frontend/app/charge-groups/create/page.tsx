@@ -40,7 +40,6 @@ export default function CreateChargeGroupPage() {
     api.get('/tariffs').then((tariffsRes) => {
       setAllTariffs(tariffsRes.data?.data || tariffsRes.data);
     }).catch(err => {
-      console.error(err);
       toast.error("Failed to load tariffs data");
     });
   }, []);

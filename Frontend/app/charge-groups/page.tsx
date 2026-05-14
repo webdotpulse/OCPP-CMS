@@ -26,7 +26,7 @@ export default function ChargeGroupsPage() {
       const response = await api.get('/charge-groups', { params: { search: searchQuery || undefined } });
       setGroups(response.data.data || response.data);
     } catch (error) {
-      console.error("Failed to fetch charge groups", error);
+      toast.error("Failed to fetch charge groups");
     } finally {
       setIsLoading(false);
     }
