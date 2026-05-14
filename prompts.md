@@ -31,7 +31,7 @@ Files to check:
 ## Backend
 
 ### Issue 3: Hardcoded Mock Data in EpexSpotService (Mock Data & Hardcoded Values)
-**Status: PENDING**
+**Status: DONE**
 **Description:** `Backend/src/services/EpexSpotService.ts` generates mock prices for the next 24 hours using a random number generator instead of calling an actual EPEX spot price API.
 **Actionable Prompt:**
 ```
