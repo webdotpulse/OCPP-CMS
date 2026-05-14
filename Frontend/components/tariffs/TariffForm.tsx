@@ -139,7 +139,7 @@ export function TariffForm({ initialData }: { initialData?: any }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="tariff_name">Tariff Plan Name</Label>
-              <Input id="tariff_name" {...register('tariff_name')} placeholder="e.g. Standard rate, Fast Charging Peak" />
+              <Input id="tariff_name" {...register('tariff_name')} placeholder="e.g. Standard Rate, Fast Charging Peak" />
               {errors.tariff_name && <p className="text-sm text-destructive">{errors.tariff_name.message}</p>}
             </div>
 

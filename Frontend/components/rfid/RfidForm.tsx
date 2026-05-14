@@ -88,12 +88,12 @@ export function RfidForm({ initialData }: { initialData?: any }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="rfid_tag">RFID Tag Hex/ID</Label>
-              <Input id="rfid_tag" {...register('rfid_tag')} placeholder="DEADBEAF" disabled={!!initialData} />
+              <Input id="rfid_tag" {...register('rfid_tag')} placeholder="e.g. 1A2B3C4D" disabled={!!initialData} />
               {errors.rfid_tag && <p className="text-sm text-destructive">{errors.rfid_tag.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="external_id">External ID (Optional)</Label>
-              <Input id="external_id" {...register('external_id')} placeholder="Ext-001" />
+              <Input id="external_id" {...register('external_id')} placeholder="e.g. Ext-001" />
               {errors.external_id && <p className="text-sm text-destructive">{errors.external_id.message}</p>}
             </div>
           </div>
