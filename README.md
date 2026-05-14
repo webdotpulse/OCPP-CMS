@@ -11,7 +11,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/savekar-ev/open-source-csms/blob/main/LICENSE"><img alt="License: ISC" src="https://img.shields.io/badge/License-ISC-blue.svg" /></a>
   <img alt="Node.js" src="https://img.shields.io/badge/Node.js-24%2B-green?logo=node.js" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript" />
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16%2B-black?logo=next.js" />
