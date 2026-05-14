@@ -125,7 +125,7 @@ export const remoteStart = async (req: Request, res: Response) => {
     }
 
     logger.info(
-      `Remote start successful: charger ${chargerId}, connector ${connectorId}`
+      `Remote start successful: charger ${chargerId}, channel ${connectorId}`
     );
     res.json({ success: true, ...result });
   } catch (error) {
@@ -300,7 +300,7 @@ export const changeAvailabilityController = async (req: Request, res: Response) 
 
     const result = await changeAvailability(chargerId, connectorId, type);
 
-    logger.info(`ChangeAvailability sent to charger ${chargerId}, connector: ${connectorId}, type: ${type}`);
+    logger.info(`ChangeAvailability sent to charger ${chargerId}, channel: ${connectorId}, type: ${type}`);
     res.json({ success: true, ...result });
   } catch (error) {
     logger.error(`Error changing availability: ${error}`);
@@ -362,14 +362,14 @@ export const unlockConnectorController = async (req: Request, res: Response) => 
     const result = await unlockConnector(chargerId, connectorId);
 
     logger.info(
-      `Unlock sent to charger ${chargerId}, connector ${connectorId}`
+      `Unlock sent to charger ${chargerId}, channel ${connectorId}`
     );
     res.json({ success: true, ...result });
   } catch (error) {
-    logger.error(`Error unlocking connector: ${error}`);
+    logger.error(`Error unlocking channel: ${error}`);
     res.status(500).json({
       success: false,
-      error: "Failed to unlock connector",
+      error: "Failed to unlock channel",
     });
   }
 };

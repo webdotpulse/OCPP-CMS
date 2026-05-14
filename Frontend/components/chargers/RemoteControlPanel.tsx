@@ -114,7 +114,7 @@ export function RemoteControlPanel({ chargerId, hideTriggerMessage }: RemoteCont
               onClick={() => sendCommand('unlock', { connectorId: parseInt(connectorId) })}
               disabled={isLoading}
             >
-              <Unlock className="mr-2 h-4 w-4" /> Unlock Connector
+              <Unlock className="mr-2 h-4 w-4" /> Unlock Channel
             </Button>
             {!hideTriggerMessage && (
               <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ export function RemoteControlPanel({ chargerId, hideTriggerMessage }: RemoteCont
                 <h4 className="font-medium text-sm">Remote Start</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <Label className="text-xs">Connector ID</Label>
+                    <Label className="text-xs">Channel ID</Label>
                     <Input value={connectorId} onChange={e => setConnectorId(e.target.value)} type="number" />
                   </div>
                   <div className="space-y-1">
@@ -335,7 +335,7 @@ export function RemoteControlPanel({ chargerId, hideTriggerMessage }: RemoteCont
               <div className="space-y-4 border p-4 rounded-md">
                 <h4 className="font-medium text-sm">Set Charging Profiles</h4>
                 <div className="space-y-1">
-                  <Label className="text-xs">Connector ID</Label>
+                  <Label className="text-xs">Channel ID</Label>
                   <Input value={connectorId} onChange={e => setConnectorId(e.target.value)} type="number" />
                 </div>
                 <div className="space-y-1">

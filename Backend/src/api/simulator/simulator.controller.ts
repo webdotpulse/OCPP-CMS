@@ -110,7 +110,7 @@ export async function spawnSimulatorGroup(req: Request, res: Response) {
           });
           await prisma.connector.create({
             data: {
-              connector_name: "Connector 1",
+              connector_name: "Channel 1",
               status: "Available",
               current_type: simConfig.type,
               max_power: simConfig.maxPowerKw,
@@ -229,7 +229,7 @@ export async function spawnSimulator(req: Request, res: Response) {
           });
           await prisma.connector.create({
             data: {
-              connector_name: "Connector 1",
+              connector_name: "Channel 1",
               status: "Available",
               current_type: config.type,
               max_power: config.maxPowerKw,

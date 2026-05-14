@@ -123,7 +123,7 @@ export function ChargerTransactionsTable({ chargerId }: ChargerTransactionsTable
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <Input
-          placeholder="Search by ID, Status, Connector..."
+          placeholder="Search by ID, Status, Channel..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="max-w-sm"
@@ -144,7 +144,7 @@ export function ChargerTransactionsTable({ chargerId }: ChargerTransactionsTable
                 <div className="flex items-center gap-1">Start Time <ArrowUpDown className="h-3 w-3" /></div>
               </TableHead>
               <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('connectorName')}>
-                <div className="flex items-center gap-1">Connector <ArrowUpDown className="h-3 w-3" /></div>
+                <div className="flex items-center gap-1">Channel <ArrowUpDown className="h-3 w-3" /></div>
               </TableHead>
               <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('idTag')}>
                 <div className="flex items-center gap-1">RFID Tag <ArrowUpDown className="h-3 w-3" /></div>

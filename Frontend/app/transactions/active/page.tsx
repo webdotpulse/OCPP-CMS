@@ -66,7 +66,7 @@ export default function ActiveSessionsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Txn ID</TableHead>
-              <TableHead>Charger / Connector</TableHead>
+              <TableHead>Charger / Channel</TableHead>
               <TableHead>Started</TableHead>
               <TableHead className="text-right">Power</TableHead>
               <TableHead className="text-right">Energy</TableHead>

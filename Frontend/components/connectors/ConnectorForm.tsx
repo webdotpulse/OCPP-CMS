@@ -72,8 +72,8 @@ export function ConnectorForm({ initialData }: { initialData?: any }) {
       router.back(); // Or router.push('/connectors')
       router.refresh();
     } catch (error: any) {
-      logger.error("Failed to save connector", error);
-      alert(error.response?.data?.error || "Failed to save connector.");
+      logger.error("Failed to save channel", error);
+      alert(error.response?.data?.error || "Failed to save channel.");
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +82,7 @@ export function ConnectorForm({ initialData }: { initialData?: any }) {
   return (
     <Card className="w-full max-w-2xl shadow-sm">
       <CardHeader className="border-b pb-4">
-        <CardTitle>{initialData ? 'Edit Connector' : 'Add Connector'}</CardTitle>
+        <CardTitle>{initialData ? 'Edit Channel' : 'Add Channel'}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-5">
@@ -109,8 +109,8 @@ export function ConnectorForm({ initialData }: { initialData?: any }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
             <div className="space-y-2">
-              <Label htmlFor="connector_name">Connector Name</Label>
-              <Input id="connector_name" {...register('connector_name')} placeholder="e.g. Connector 1" />
+              <Label htmlFor="connector_name">Channel Name</Label>
+              <Input id="connector_name" {...register('connector_name')} placeholder="e.g. Channel 1" />
               {errors.connector_name && <p className="text-sm text-destructive">{errors.connector_name.message}</p>}
             </div>
              <div className="space-y-2">
@@ -169,7 +169,7 @@ export function ConnectorForm({ initialData }: { initialData?: any }) {
           <Button variant="outline" type="button" onClick={() => router.back()}>Cancel</Button>
           <Button type="submit" disabled={isLoading}>
              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-             {initialData ? 'Update Connector' : 'Add Connector'}
+             {initialData ? 'Update Channel' : 'Add Channel'}
           </Button>
         </CardFooter>
       </form>

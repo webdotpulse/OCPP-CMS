@@ -63,13 +63,13 @@ export function ConnectorList({ connectors: initialConnectors, readOnly = false,
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this connector?")) return;
+    if (!confirm("Are you sure you want to delete this channel?")) return;
     try {
       const { api } = await import('@/lib/api');
       await api.delete(`/connectors/${id}`);
       setConnectors(connectors.filter(c => c.connector_id !== id));
     } catch {
-      alert("Error deleting connector.");
+      alert("Error deleting channel.");
     }
   };
 
@@ -127,8 +127,8 @@ export function ConnectorList({ connectors: initialConnectors, readOnly = false,
     return (
       <div className="py-8 text-center text-muted-foreground border border-dashed rounded-lg flex flex-col items-center gap-2">
         <Clock className="h-8 w-8 text-muted-foreground/50" />
-        <p>No connectors configured for this charger.</p>
-        <p className="text-xs">Connectors will be auto-created when the charger connects.</p>
+        <p>No channels configured for this charger.</p>
+        <p className="text-xs">Channels will be auto-created when the charger connects.</p>
       </div>
     );
   }
@@ -167,7 +167,7 @@ export function ConnectorList({ connectors: initialConnectors, readOnly = false,
       };
 
       await api.post('/ocpp/set-charging-profile', payload);
-      toast.success(`Speed limit set to ${limit}A for connector ${connectorId}`);
+      toast.success(`Speed limit set to ${limit}A for channel ${connectorId}`);
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to set charging profile");
     } finally {
@@ -190,7 +190,7 @@ export function ConnectorList({ connectors: initialConnectors, readOnly = false,
         delete next[connectorId];
         return next;
       });
-      toast.success(`Speed limit cleared for connector ${connectorId}`);
+      toast.success(`Speed limit cleared for channel ${connectorId}`);
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to clear charging profile");
     } finally {
@@ -227,7 +227,7 @@ export function ConnectorList({ connectors: initialConnectors, readOnly = false,
         <TableHeader>
           <TableRow>
             <TableHead className="w-10"></TableHead>
-            <TableHead>Connector</TableHead>
+            <TableHead>Channel</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Max Power</TableHead>
             <TableHead>Power</TableHead>
@@ -257,7 +257,7 @@ export function ConnectorList({ connectors: initialConnectors, readOnly = false,
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
                     {getStatusIcon(conn.status)}
-                    <span>{conn.connector_name || `Connector ${conn.connector_id}`}</span>
+                    <span>{conn.connector_name || `Channel ${conn.connector_id}`}</span>
                   </div>
                 </TableCell>
                 <TableCell>

@@ -123,7 +123,7 @@ export default function TransactionsPage() {
                 <div className="flex items-center gap-1">Start Time <ArrowUpDown className="h-3 w-3" /></div>
               </TableHead>
               <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('charger')}>
-                <div className="flex items-center gap-1">Charger / Connector <ArrowUpDown className="h-3 w-3" /></div>
+                <div className="flex items-center gap-1">Charger / Channel <ArrowUpDown className="h-3 w-3" /></div>
               </TableHead>
               <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('idTag')}>
                 <div className="flex items-center gap-1">RFID Tag <ArrowUpDown className="h-3 w-3" /></div>

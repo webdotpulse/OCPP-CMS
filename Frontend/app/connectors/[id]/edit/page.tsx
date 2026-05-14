@@ -21,8 +21,8 @@ export default function EditConnectorPage() {
         const response = await api.get(`/connectors/${id}`);
         setInitialData(response.data?.data || response.data);
       } catch (error) {
-        logger.error("Failed to fetch connector", error);
-        alert("Failed to load connector.");
+        logger.error("Failed to fetch channel", error);
+        alert("Failed to load channel.");
       } finally {
         setIsLoading(false);
       }
@@ -35,12 +35,12 @@ export default function EditConnectorPage() {
       <div className="mb-6 space-y-4">
         <Link href="/connectors">
           <Button variant="ghost" size="sm" className="-ml-4 text-muted-foreground">
-            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Connectors
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Channels
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Edit Connector</h1>
-          <p className="text-muted-foreground">Update configuration for this charge point connector.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Edit Channel</h1>
+          <p className="text-muted-foreground">Update configuration for this charge point channel.</p>
         </div>
       </div>
       
@@ -49,7 +49,7 @@ export default function EditConnectorPage() {
       ) : initialData ? (
         <ConnectorForm initialData={initialData} />
       ) : (
-        <div className="text-red-500">Failed to load connector data.</div>
+        <div className="text-red-500">Failed to load channel data.</div>
       )}
     </AppShell>
   );

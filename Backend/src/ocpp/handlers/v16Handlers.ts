@@ -278,7 +278,7 @@ export async function handleStartTransaction(
     }
 
     // Always create a system Transaction record
-    const connectorName = `Connector ${connectorId}`;
+    const connectorName = `Channel ${connectorId}`;
     const newTransaction = await prisma.transaction.create({
       data: {
         transactionId: String(transactionId),
@@ -310,7 +310,7 @@ export async function handleStartTransaction(
     // Start transaction in registry memory/Redis
     await chargerRegistry.startTransaction(chargerId, transactionId, connectorName, idTag);
 
-    // Update connector status
+    // Update channel status
     const existingConnector = await prisma.connector.findFirst({
         where: {
           evse: { charger_id: chargerId },
@@ -326,7 +326,7 @@ export async function handleStartTransaction(
     }
 
     logger.info(
-      `Transaction ${transactionId} started on charger ${chargerId}, connector ${connectorId}`
+      `Transaction ${transactionId} started on charger ${chargerId}, channel ${connectorId}`
     );
 
     // Trigger Load Balancing to recalculate capacity with new session
@@ -369,7 +369,7 @@ export async function handleStopTransaction(
   try {
     // Process optional final meter values
     if (transactionData && Array.isArray(transactionData)) {
-      // Find the transaction to get the connector ID, default to 1 if not found
+      // Find the transaction to get the channel ID, default to 1 if not found
       const tempTransaction = await prisma.transaction.findFirst({
         where: { transactionId: String(transactionId) },
       });
@@ -603,11 +603,11 @@ export async function handleStatusNotification(
   const info = payload.info;
 
   try {
-    // Update/Create connector status in database
-    const connectorName = `Connector ${connectorId}`;
+    // Update/Create channel status in database
+    const connectorName = `Channel ${connectorId}`;
 
-    // For connectorId 0 (Charge Point itself), we don't usually create a "Connector" record
-    // unless the system design requires it. Here we only handle actual connectors (1+).
+    // For connectorId 0 (Charge Point itself), we don't usually create a "Channel" record
+    // unless the system design requires it. Here we only handle actual channels (1+).
     if (connectorId > 0) {
       let evse = await prisma.evse.findUnique({
         where: {
@@ -649,7 +649,7 @@ export async function handleStatusNotification(
             updatedAt: new Date(),
           }
         });
-        logger.info(`Auto-created connector ${connectorName} for charger ${chargerId}`);
+        logger.info(`Auto-created channel ${connectorName} for charger ${chargerId}`);
       }
     }
 
@@ -660,7 +660,7 @@ export async function handleStatusNotification(
     });
 
     logger.info(
-      `StatusNotification from charger ${chargerId}: connector ${connectorId} status = ${status}`
+      `StatusNotification from charger ${chargerId}: channel ${connectorId} status = ${status}`
     );
 
     const response = {};

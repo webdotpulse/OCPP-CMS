@@ -199,7 +199,7 @@ export async function changeAvailability(
 
     await chargerRegistry.publishCommand(chargerId, message);
 
-    logger.info(`ChangeAvailability sent to charger ${chargerId}, connector: ${connectorId}, type: ${type}`);
+    logger.info(`ChangeAvailability sent to charger ${chargerId}, channel: ${connectorId}, type: ${type}`);
 
     return { status: "Accepted" };
   } catch (error) {
@@ -299,7 +299,7 @@ export async function unlockConnector(
 
     await chargerRegistry.publishCommand(chargerId, message);
 
-    logger.info(`Unlock sent to charger ${chargerId}, connector ${connectorId}`);
+    logger.info(`Unlock sent to charger ${chargerId}, channel ${connectorId}`);
 
     return { status: "Accepted" };
   } catch (error) {
@@ -335,7 +335,7 @@ export async function setChargingProfile(
 
     await chargerRegistry.publishCommand(chargerId, message);
 
-    logger.info(`SetChargingProfile sent to charger ${chargerId}, connector ${connectorId}`);
+    logger.info(`SetChargingProfile sent to charger ${chargerId}, channel ${connectorId}`);
 
     return { status: "Accepted" };
   } catch (error) {

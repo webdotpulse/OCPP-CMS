@@ -48,7 +48,7 @@ export function LiveSessionsTable() {
               <TableRow>
                 <TableHead>Txn ID</TableHead>
                 <TableHead>Charger</TableHead>
-                <TableHead>Connector</TableHead>
+                <TableHead>Channel</TableHead>
                 <TableHead>Started</TableHead>
                 <TableHead className="text-right">Power</TableHead>
                 <TableHead className="text-right">Energy</TableHead>
