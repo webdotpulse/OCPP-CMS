@@ -182,7 +182,7 @@ export function OcpiTab() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" placeholder="e.g. Partner CPO" />
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" placeholder="e.g. Roaming Partner A" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="url" className="text-right">Base URL</Label>
@@ -190,7 +190,7 @@ export function OcpiTab() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="token" className="text-right">Token (CREDENTIALS)</Label>
-              <Input id="token" type="password" value={token} onChange={(e) => setToken(e.target.value)} className="col-span-3" placeholder="Bearer token" />
+              <Input id="token" type="password" value={token} onChange={(e) => setToken(e.target.value)} className="col-span-3" placeholder="e.g. Bearer eyJhb..." />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="version" className="text-right">Version</Label>

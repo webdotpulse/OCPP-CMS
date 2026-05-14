@@ -110,7 +110,7 @@ export function ConnectorForm({ initialData }: { initialData?: any }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
             <div className="space-y-2">
               <Label htmlFor="connector_name">Channel Name</Label>
-              <Input id="connector_name" {...register('connector_name')} placeholder="e.g. Channel 1" />
+              <Input id="connector_name" {...register('connector_name')} placeholder="e.g. Connector A" />
               {errors.connector_name && <p className="text-sm text-destructive">{errors.connector_name.message}</p>}
             </div>
              <div className="space-y-2">

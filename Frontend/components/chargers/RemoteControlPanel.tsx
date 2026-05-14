@@ -214,7 +214,7 @@ export function RemoteControlPanel({ chargerId, hideTriggerMessage }: RemoteCont
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">RFID Tag ID</Label>
-                    <Input value={tagId} onChange={e => setTagId(e.target.value)} placeholder="e.g. DEADBEAF" />
+                    <Input value={tagId} onChange={e => setTagId(e.target.value)} placeholder="e.g. 1A2B3C4D" />
                   </div>
                 </div>
                 <Button
@@ -233,7 +233,7 @@ export function RemoteControlPanel({ chargerId, hideTriggerMessage }: RemoteCont
                 <h4 className="font-medium text-sm">Remote Stop</h4>
                 <div className="space-y-1">
                   <Label className="text-xs">Transaction ID</Label>
-                  <Input value={transactionId} onChange={e => setTransactionId(e.target.value)} type="number" placeholder="Enter Txn ID" />
+                  <Input value={transactionId} onChange={e => setTransactionId(e.target.value)} type="number" placeholder="e.g. 12345" />
                 </div>
                 <Button
                   variant="destructive"
@@ -252,7 +252,7 @@ export function RemoteControlPanel({ chargerId, hideTriggerMessage }: RemoteCont
                 <h4 className="font-medium text-sm">Test RFID Card</h4>
                 <div className="space-y-1">
                   <Label className="text-xs">RFID Tag ID</Label>
-                  <Input value={testTagId} onChange={e => setTestTagId(e.target.value)} placeholder="e.g. DEADBEAF" />
+                  <Input value={testTagId} onChange={e => setTestTagId(e.target.value)} placeholder="e.g. 1A2B3C4D" />
                 </div>
                 <Button
                   variant="outline"
@@ -290,15 +290,15 @@ export function RemoteControlPanel({ chargerId, hideTriggerMessage }: RemoteCont
                 <h4 className="font-medium text-sm">Data Transfer</h4>
                 <div className="space-y-1">
                   <Label className="text-xs">Vendor ID</Label>
-                  <Input value={vendorId} onChange={e => setVendorId(e.target.value)} placeholder="e.g. Ruslan" />
+                  <Input value={vendorId} onChange={e => setVendorId(e.target.value)} placeholder="e.g. VendorName" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Message ID (Optional)</Label>
-                  <Input value={dataTransferMessageId} onChange={e => setDataTransferMessageId(e.target.value)} placeholder="e.g. SetChargeRate" />
+                  <Input value={dataTransferMessageId} onChange={e => setDataTransferMessageId(e.target.value)} placeholder="e.g. CustomAction" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Data (Optional)</Label>
-                  <Input value={dataTransferData} onChange={e => setDataTransferData(e.target.value)} placeholder="e.g. { rate: 32 }" />
+                  <Input value={dataTransferData} onChange={e => setDataTransferData(e.target.value)} placeholder='e.g. {"rate": 32}' />
                 </div>
                 <Button
                   variant="outline"

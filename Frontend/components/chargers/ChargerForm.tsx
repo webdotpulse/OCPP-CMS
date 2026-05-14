@@ -133,7 +133,7 @@ export function ChargerForm({ initialData }: { initialData?: any }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Charger Identity (OCPP ID)</Label>
-              <Input id="name" {...register('name')} placeholder="e.g. Charger-A01" />
+              <Input id="name" {...register('name')} placeholder="e.g. Front Parking Charger" />
               {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
