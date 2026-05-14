@@ -3,6 +3,7 @@
 ## Frontend
 
 ### Issue 1: Hardcoded Configuration Keys (Mock Data & Hardcoded Values)
+**Status: PENDING**
 **Description:** The frontend README indicates that some environment variables or configuration keys might be hardcoded in development instead of being dynamically read from `.env`.
 **Actionable Prompt:**
 ```
@@ -10,6 +11,7 @@ Check the `Frontend/README.md` and scan the `Frontend/` directory for any hardco
 ```
 
 ### Issue 2: Direct State Mutation / Poor State Management (Architectural Flaws & Anti-patterns)
+**Status: DONE**
 **Description:** While no overt `FIXME` flags exist, the frontend might be relying on `console.error` for state updates or omitting proper user feedback on errors. There are multiple `console.error` statements scattered across pages and components without updating the UI state using toasts (e.g., `sonner`) or local React state for error boundaries.
 **Actionable Prompt:**
 ```
@@ -29,6 +31,7 @@ Files to check:
 ## Backend
 
 ### Issue 3: Hardcoded Mock Data in EpexSpotService (Mock Data & Hardcoded Values)
+**Status: PENDING**
 **Description:** `Backend/src/services/EpexSpotService.ts` generates mock prices for the next 24 hours using a random number generator instead of calling an actual EPEX spot price API.
 **Actionable Prompt:**
 ```
@@ -36,6 +39,7 @@ In `Backend/src/services/EpexSpotService.ts`, the `fetchAndStoreDayAheadPrices` 
 ```
 
 ### Issue 4: Unfinished API Endpoints (Unfinished Code)
+**Status: PENDING**
 **Description:** Several API controllers contain placeholder logic returning `501 Not Implemented` with static messages.
 **Actionable Prompt:**
 ```
@@ -48,6 +52,7 @@ Please implement the actual business logic for these endpoints. If integration i
 ```
 
 ### Issue 5: Empty Catch Blocks in ChargePointSimulator (Unfinished Code)
+**Status: PENDING**
 **Description:** `Backend/src/simulator/ChargePointSimulator.ts` contains empty catch blocks that swallow errors silently.
 **Actionable Prompt:**
 ```
@@ -57,6 +62,7 @@ In `Backend/src/simulator/ChargePointSimulator.ts`, there are empty `catch (e) {
 ## Database
 
 ### Issue 6: Unoptimized Database Queries / Prisma in Loops (Architectural Flaws & Anti-patterns)
+**Status: PENDING**
 **Description:** `Backend/src/services/LoadManagementService.ts` is making Prisma queries inside `for...of` loops, which is an N+1 query problem and an anti-pattern that can severely degrade database performance.
 **Actionable Prompt:**
 ```
