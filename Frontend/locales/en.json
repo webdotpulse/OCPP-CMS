@@ -12,6 +12,7 @@
       "roaming": "Roaming",
       "configProfiles": "Config Profiles",
       "quirkProfiles": "Quirk Profiles",
+      "emsGateways": "EMS Gateways",
       "settings": "Settings",
       "ocppConsole": "OCPP Console"
     },
