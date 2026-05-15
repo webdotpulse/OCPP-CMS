@@ -28,6 +28,7 @@ import configProfilesRoutes from "./api/config-profiles/config-profiles.routes.j
 import quirkProfilesRoutes from "./api/quirk-profiles/quirk-profiles.routes.js";
 import mailRoutes from "./api/mail/mail.routes.js";
 import settingsTariffsRoutes from "./api/settings/tariffs/tariffs.routes.js";
+import settingsMailRoutes from "./api/settings/mail/mail.routes.js";
 
 // Import OCPP servers
 import { ocppServer } from "./ocpp/ocppServer.js";
@@ -96,6 +97,7 @@ export function createApp(): Application {
   app.use("/api/quirk-profiles", authenticateToken, quirkProfilesRoutes);
   app.use("/api/mail", authenticateToken, mailRoutes);
   app.use("/api/settings/tariffs", authenticateToken, settingsTariffsRoutes);
+  app.use("/api/settings/mail", authenticateToken, settingsMailRoutes);
 
   // Error handling
   app.use(notFoundHandler);
