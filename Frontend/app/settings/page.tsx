@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Loader2, User, KeyRound, ShieldAlert, ShieldCheck, Settings, WalletCards } from "lucide-react";
+import { Loader2, User, KeyRound, ShieldAlert, ShieldCheck, Settings, WalletCards, Mail } from "lucide-react";
 import Image from "next/image";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -56,6 +56,7 @@ export default function SettingsPage() {
   const [setupSecret, setSetupSecret] = useState<string | null>(null);
   const [setupCode, setSetupCode] = useState("");
   const [is2FALoading, setIs2FALoading] = useState(false);
+  const [mailConfig, setMailConfig] = useState<{ fromAddress: string; isActive: boolean } | null>(null);
 
   const profileForm = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
@@ -160,6 +161,22 @@ export default function SettingsPage() {
       setIs2FALoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      const fetchMailConfig = async () => {
+        try {
+          const res = await api.get('/settings/mail');
+          if (res.data.success && res.data.data) {
+            setMailConfig(res.data.data);
+          }
+        } catch (err) {
+          console.error("Failed to fetch mail config:", err);
+        }
+      };
+      fetchMailConfig();
+    }
+  }, [user]);
 
   const confirm2FASetup = async () => {
     setIs2FALoading(true);
@@ -455,6 +472,30 @@ export default function SettingsPage() {
                   <Link href="/settings/tariffs">
                     <Button variant="outline" size="sm" className="w-full">
                       Configure Tariffs Integration
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="space-y-2 border rounded-lg p-4 bg-muted/30">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Mail className="h-4 w-4" /> Mail Server
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Configure SMTP settings for outgoing system emails.
+                  </p>
+                  {mailConfig ? (
+                    <div className="text-xs text-muted-foreground mb-3 flex items-center gap-2">
+                      <span className={`inline-block w-2 h-2 rounded-full ${mailConfig.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+                      {mailConfig.isActive ? 'Active' : 'Inactive'} • {mailConfig.fromAddress}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground mb-3">
+                      Not configured
+                    </div>
+                  )}
+                  <Link href="/settings/mail">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Manage Mail Settings
                     </Button>
                   </Link>
                 </div>
