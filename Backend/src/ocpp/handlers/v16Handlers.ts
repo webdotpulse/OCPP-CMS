@@ -8,6 +8,7 @@ import { logOcppMessage } from "../messageHandlers.js";
 import { OcppError } from "../errors/OcppError.js";
 import { normalizeMeterValues } from "../quirkNormalizer.js";
 import { redisClient } from "../../config/redis.js";
+import { getTariffForTransaction } from "../../utils/tariffHelpers.js";
 
 const ocpp16Reasons = [
   "EmergencyStop", "EVDisconnected", "HardReset", "Local", "Other",
@@ -385,13 +386,13 @@ export async function handleStopTransaction(
     // End transaction in registry memory/Redis
     await chargerRegistry.endTransaction(chargerId, transactionId);
 
-    // Calculate total cost from tariff
-    const tariff = await prisma.tariff.findFirst();
-    const tariffRate = tariff?.electricity_rate || tariff?.charge || 10; // Default rate
-
     const transaction = await prisma.transaction.findFirst({
       where: { transactionId: String(transactionId) },
     });
+
+    // Calculate total cost from dynamically resolved tariff
+    const tariff = await getTariffForTransaction(chargerId, idTag || transaction?.idTag);
+    const tariffRate = tariff?.electricity_rate || tariff?.charge || 0; // Dynamic rate, fallback to 0 instead of 10
 
     let totalCost = 0;
     if (transaction) {
@@ -481,6 +482,29 @@ export async function handleStopTransaction(
         amountDue = (energyConsumed / 1000) * hourlyCostKwh * 100; // Convert to paise/cents
       } else {
         amountDue = (energyConsumed / 1000) * tariffRate * 100; // Convert to paise
+      }
+
+      // Add fixed and time-based fees to amountDue as well, similar to totalCost
+      if (transaction) {
+          const stopTime = new Date(timestamp);
+          const startTimeMs = rfidSession.startTime.getTime();
+          const endTimeMs = stopTime.getTime();
+          const totalDurationMinutes = Math.max(0, (endTimeMs - startTimeMs) / (1000 * 60));
+
+          const lastActiveMeterValue = await prisma.meterValue.findFirst({
+            where: { transactionId: String(transactionId), power: { gt: 0 } },
+            orderBy: { timestamp: 'desc' },
+          });
+
+          const idleDurationMinutes = lastActiveMeterValue
+            ? Math.max(0, (endTimeMs - lastActiveMeterValue.timestamp.getTime()) / (1000 * 60))
+            : 0;
+
+          const connectionFee = (tariff?.charge || 0) * 100;
+          const timeFee = (tariff?.time_fee || 0) * totalDurationMinutes * 100;
+          const idleFee = (tariff?.idle_fee || 0) * idleDurationMinutes * 100;
+
+          amountDue += connectionFee + timeFee + idleFee;
       }
 
       await prisma.rfidSession.update({

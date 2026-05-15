@@ -6,6 +6,7 @@ import { logger } from "../../utils/logger.js";
 import { loadManagementService } from "../../services/LoadManagementService.js";
 import { logOcppMessage } from "../messageHandlers.js";
 import { OcppError } from "../errors/OcppError.js";
+import { getTariffForTransaction } from "../../utils/tariffHelpers.js";
 import {
   handleGetVariables,
   handleSetVariables,
@@ -480,12 +481,12 @@ export async function handleTransactionEvent(
 
       await chargerRegistry.endTransaction(chargerId, transactionId);
 
-      const tariff = await prisma.tariff.findFirst();
-      const tariffRate = tariff?.electricity_rate || tariff?.charge || 10;
-
       const transaction = await prisma.transaction.findFirst({
         where: { transactionId: String(transactionId) },
       });
+
+      const tariff = await getTariffForTransaction(chargerId, idTag || transaction?.idTag);
+      const tariffRate = tariff?.electricity_rate || tariff?.charge || 0;
 
       if (transaction) {
         let energyConsumed = meterStop - (transaction.initialMeterValue || 0);
