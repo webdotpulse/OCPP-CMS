@@ -1,0 +1,20 @@
+--- Backend/prisma/schema.prisma
++++ Backend/prisma/schema.prisma
+@@ -470,3 +470,22 @@
+   value     String
+   updatedAt DateTime @updatedAt
+ }
++
++// EMS Gateway linked to an account
++model EmsGateway {
++  id            Int      @id @default(autoincrement())
++  gateway_id    String   @unique @default(uuid())
++  client_id     Int
++  status        String   @default("offline")
++  auth_token    String   @unique
++  last_heartbeat DateTime @default("1970-01-01T00:00:00.000Z")
++  createdAt     DateTime @default(now())
++  updatedAt     DateTime @updatedAt
++
++  client User @relation(fields: [client_id], references: [id])
++}
