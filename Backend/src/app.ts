@@ -35,6 +35,7 @@ import settingsMailRoutes from "./api/settings/mail/mail.routes.js";
 import { ocppServer } from "./ocpp/ocppServer.js";
 import { ocppLogsServer } from "./ocpp/logsWebSocket.js";
 import { setupRealtimeSocket } from "./ocpp/realtime.socket.js";
+import { startTelemetrySyncCron } from "./cron/telemetrySyncCron.js";
 
 /**
  * Create and configure Express application
@@ -129,6 +130,9 @@ export function startServers(): void {
 
   // Setup Socket.IO realtime server
   setupRealtimeSocket(server);
+
+  // Start background crons
+  startTelemetrySyncCron();
 
   // Graceful shutdown
   const shutdown = (signal: string) => {
