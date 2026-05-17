@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Loader2, User, KeyRound, ShieldAlert, ShieldCheck, Settings, WalletCards, Mail } from "lucide-react";
+import { Loader2, User, KeyRound, ShieldAlert, ShieldCheck, Settings, WalletCards, Mail, Globe, Activity } from "lucide-react";
 import Image from "next/image";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -496,6 +496,62 @@ export default function SettingsPage() {
                   <Link href="/settings/mail">
                     <Button variant="outline" size="sm" className="w-full">
                       Manage Mail Settings
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="space-y-2 border rounded-lg p-4 bg-muted/30">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Globe className="h-4 w-4" /> Roaming
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Manage OCPI and OICP roaming integrations and network settings.
+                  </p>
+                  <Link href="/roaming">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Configure Roaming
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="space-y-2 border rounded-lg p-4 bg-muted/30">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Settings className="h-4 w-4" /> Config Profiles
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Manage standard OCPP configuration profiles applied to charging stations.
+                  </p>
+                  <Link href="/config-profiles">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Manage Config Profiles
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="space-y-2 border rounded-lg p-4 bg-muted/30">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Settings className="h-4 w-4" /> Quirk Profiles
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Manage custom quirk profiles to handle specific charger model behaviors.
+                  </p>
+                  <Link href="/quirk-profiles">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Manage Quirk Profiles
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="space-y-2 border rounded-lg p-4 bg-muted/30">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> EMS Gateways
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Configure and monitor Energy Management System gateways.
+                  </p>
+                  <Link href="/ems-gateways">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Manage EMS Gateways
                     </Button>
                   </Link>
                 </div>
